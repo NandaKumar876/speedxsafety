@@ -25,12 +25,12 @@ export const TripHistoryScreen = () => {
   const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
 
   const trips = mockTrips;
-  const totalDistance = trips.reduce((s, t) => s + t.distance_km, 0).toFixed(1);
+  const totalDistance = trips.reduce((s: number, t: Trip) => s + t.distance_km, 0).toFixed(1);
   const totalTrips = trips.length;
-  const avgScore = trips.filter(t => t.safety_grade === 'A' || t.safety_grade === 'B').length;
+  const avgScore = trips.filter((t: Trip) => t.safety_grade === 'A' || t.safety_grade === 'B').length;
 
   return (
-    <LinearGradient colors={['#0A0E27', '#111538', '#1A1E3A']} style={styles.container}>
+    <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Trip History</Text>
 
@@ -51,7 +51,7 @@ export const TripHistoryScreen = () => {
         </View>
 
         {/* Trip list */}
-        {trips.map((trip) => (
+        {trips.map((trip: Trip) => (
           <TouchableOpacity
             key={trip.trip_id}
             onPress={() => setSelectedTrip(selectedTrip === trip.trip_id ? null : trip.trip_id)}

@@ -10,6 +10,7 @@ import { SpeedGauge } from '../../components/SpeedGauge';
 import { GlassCard, StatCard, StatusBadge } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { mockTeens, mockTrips } from '../../constants/mockData';
+import { Trip } from '../../types';
 
 export const TeenDashboard = ({ navigation }: any) => {
   const teen = mockTeens[0];
@@ -47,7 +48,7 @@ export const TeenDashboard = ({ navigation }: any) => {
   const tripDistance = isDriving ? '8.2' : '0.0';
 
   return (
-    <LinearGradient colors={['#0A0E27', '#111538', '#1A1E3A']} style={styles.container}>
+    <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -143,7 +144,7 @@ export const TeenDashboard = ({ navigation }: any) => {
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
-          {mockTrips.slice(0, 2).map(trip => (
+          {mockTrips.slice(0, 2).map((trip: Trip) => (
             <GlassCard key={trip.trip_id} style={styles.tripCard}>
               <View style={styles.tripRow}>
                 <View style={styles.tripInfo}>
