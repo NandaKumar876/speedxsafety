@@ -52,4 +52,4 @@ npm run dev
 2. Commit your changes (`git commit -m 'Add some feature'`)
 3. Push to the branch (`git push origin feature/my-feature`)
 4. Open a pull request
-5. 
+   
