@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-### Running Frontend Only
+## Running Frontend Only
 
 If you only need to work on the mobile app:
 
