@@ -17,7 +17,7 @@ This project follows a clean, decoupled architecture:
 
 ## Getting Started
 
-### Unified Workflow (Recommended)
+## Unified Workflow (Recommended)
 
 You can run both the frontend and backend simultaneously from the root of the project using:
 
