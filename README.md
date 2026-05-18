@@ -46,7 +46,7 @@ npm install
 npm run dev
 ```
 
-## Contributing
+# Contributing
 
 1. Create a feature branch (`git checkout -b feature/my-feature`)
 2. Commit your changes (`git commit -m 'Add some feature'`)
