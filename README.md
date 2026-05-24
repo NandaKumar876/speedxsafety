@@ -36,7 +36,7 @@ npm install
 npm start
 ```
 
-## Running Backend Only
+# Running Backend Only
 
 If you only need to work on the backend APIs:
 
