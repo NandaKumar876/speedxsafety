@@ -1,4 +1,4 @@
-# SpeedxSafety Monorepo
+ SpeedxSafety Monorepo
 
 SpeedxSafety is a robust mobile application designed to ensure the safety of teen drivers. This repository is organized as a monorepo containing both the frontend mobile application and the backend services.
 
@@ -17,7 +17,7 @@ This project follows a clean, decoupled architecture:
 
 ## Getting Started
 
-### Unified Workflow (Recommended)
+## Unified Workflow (Recommended)
 
 You can run both the frontend and backend simultaneously from the root of the project using:
 
@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-### Running Frontend Only
+## Running Frontend Only
 
 If you only need to work on the mobile app:
 
@@ -36,7 +36,7 @@ npm install
 npm start
 ```
 
-### Running Backend Only
+# Running Backend Only
 
 If you only need to work on the backend APIs:
 
@@ -46,9 +46,10 @@ npm install
 npm run dev
 ```
 
-## Contributing
+# Contributing
 
 1. Create a feature branch (`git checkout -b feature/my-feature`)
 2. Commit your changes (`git commit -m 'Add some feature'`)
 3. Push to the branch (`git push origin feature/my-feature`)
 4. Open a pull request
+   
