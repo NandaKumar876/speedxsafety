@@ -1,6 +1,8 @@
 // ============================================
-// SpeedxSafety - Design System
+// SpeedxSafety - Design System (Unified Dark Glass)
 // ============================================
+
+import { scaleWidth, scaleHeight, scaleFont } from '../utils/responsive';
 
 export const Colors = {
   // Primary palette
@@ -16,31 +18,31 @@ export const Colors = {
   danger: '#FF3B30',
   dangerLight: '#FF6961',
   
-  // Backgrounds (Light mode)
-  bgPrimary: '#F2F6FF',
-  bgSecondary: '#FFFFFF',
-  bgTertiary: '#E8EDF5',
-  bgCard: 'rgba(255, 255, 255, 0.7)', // Semi-transparent for liquid glass
-  bgCardHover: 'rgba(255, 255, 255, 0.85)',
-  bgGlass: 'rgba(255, 255, 255, 0.65)',
+  // Backgrounds (Unified Dark Mode)
+  bgPrimary: '#060919',      // Deep space black
+  bgSecondary: '#0D1130',    // Dark navy card backdrop
+  bgTertiary: '#161B46',     // Slightly lighter navy accent
+  bgCard: 'rgba(255, 255, 255, 0.04)',      // Semi-transparent for liquid glass
+  bgCardHover: 'rgba(255, 255, 255, 0.08)',
+  bgGlass: 'rgba(255, 255, 255, 0.03)',
 
   // Text
-  textPrimary: '#1A1E3A',
-  textSecondary: '#6B7280',
-  textTertiary: '#9CA3AF',
-  textInverse: '#FFFFFF',
+  textPrimary: '#FFFFFF',    // High contrast white
+  textSecondary: '#9CA5C9',  // Soft bluish-gray
+  textTertiary: '#606A93',   // Muted bluish-gray
+  textInverse: '#060919',    // Dark text on bright backgrounds
 
   // Borders
-  border: 'rgba(255, 255, 255, 0.8)', // Frosty white borders
-  borderLight: 'rgba(255, 255, 255, 0.5)',
+  border: 'rgba(255, 255, 255, 0.08)',      // Frosty subtle white borders
+  borderLight: 'rgba(255, 255, 255, 0.04)',
 
   // Gradients (used as arrays)
   gradientPrimary: ['#007AFF', '#00C6FF'],
   gradientSafe: ['#34C759', '#30D158'],
   gradientWarning: ['#FF9500', '#FFCC00'],
   gradientDanger: ['#FF3B30', '#FF6961'],
-  gradientBg: ['#E6EFFF', '#F2F6FF', '#FFFFFF'], // Light gradient background
-  gradientCard: ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.4)'],
+  gradientBg: ['#060919', '#0D1130', '#161B46'], // Dark gradient background
+  gradientCard: ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.01)'],
 
   // Grade colors
   gradeA: '#34C759',
@@ -50,40 +52,40 @@ export const Colors = {
   gradeF: '#FF3B30',
 
   // Misc
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  shadow: 'rgba(0, 0, 0, 0.3)',
+  overlay: 'rgba(0, 0, 0, 0.65)',
+  shadow: 'rgba(0, 0, 0, 0.5)',
 };
 
 export const Spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  huge: 48,
+  xs: scaleHeight(4),
+  sm: scaleHeight(8),
+  md: scaleHeight(12),
+  lg: scaleHeight(16),
+  xl: scaleHeight(20),
+  xxl: scaleHeight(24),
+  xxxl: scaleHeight(32),
+  huge: scaleHeight(48),
 };
 
 export const BorderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
+  sm: scaleWidth(8),
+  md: scaleWidth(12),
+  lg: scaleWidth(16),
+  xl: scaleWidth(20),
+  xxl: scaleWidth(24),
   round: 999,
 };
 
 export const FontSize = {
-  xs: 11,
-  sm: 13,
-  md: 15,
-  lg: 17,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  hero: 48,
-  mega: 64,
+  xs: scaleFont(11),
+  sm: scaleFont(13),
+  md: scaleFont(15),
+  lg: scaleFont(17),
+  xl: scaleFont(20),
+  xxl: scaleFont(24),
+  xxxl: scaleFont(32),
+  hero: scaleFont(48),
+  mega: scaleFont(64),
 };
 
 export const FontWeight = {
@@ -98,30 +100,30 @@ export const Shadow = {
   sm: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   md: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 5,
   },
   lg: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 10,
   },
   glow: (color: string) => ({
     shadowColor: color,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   }),
 };
 

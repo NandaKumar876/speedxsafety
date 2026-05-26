@@ -9,13 +9,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { mockBadges, mockTeens } from '../../constants/mockData';
+import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 export const BadgesScreen = () => {
   const teen = mockTeens[0];
   const earnedCount = mockBadges.filter(b => b.earned).length;
 
   return (
-    <LinearGradient colors={['#0A0E27', '#111538', '#1A1E3A']} style={styles.container}>
+    <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Achievements</Text>
 
@@ -80,10 +81,10 @@ export const BadgesScreen = () => {
               <View style={[styles.badgeIconContainer, badge.earned && styles.badgeIconEarned]}>
                 <Text style={styles.badgeIcon}>{badge.icon}</Text>
               </View>
-              <Text style={[styles.badgeTitle, !badge.earned && { color: Colors.textTertiary }]}>
+              <Text style={[styles.badgeTitle, !badge.earned && { color: Colors.textTertiary }]} numberOfLines={1}>
                 {badge.title}
               </Text>
-              <Text style={styles.badgeDesc}>{badge.description}</Text>
+              <Text style={styles.badgeDesc} numberOfLines={3}>{badge.description}</Text>
 
               {/* Progress bar */}
               {!badge.earned && (
@@ -116,7 +117,11 @@ export const BadgesScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: 60, paddingBottom: 100 },
+  scrollContent: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: scaleHeight(60),
+    paddingBottom: scaleHeight(100),
+  },
   title: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
@@ -128,15 +133,15 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   streakGlow: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+    width: scaleWidth(64),
+    height: scaleWidth(64),
+    borderRadius: scaleWidth(20),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
     ...Shadow.glow('#FF9500'),
   },
-  streakEmoji: { fontSize: 32 },
+  streakEmoji: { fontSize: scaleFont(32) },
   streakInfo: { marginBottom: Spacing.lg },
   streakDays: {
     fontSize: FontSize.xxl,
@@ -150,15 +155,15 @@ const styles = StyleSheet.create({
   },
   streakMeter: {},
   streakMeterBg: {
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 4,
+    height: scaleHeight(8),
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: scaleHeight(4),
     overflow: 'hidden',
     marginBottom: 4,
   },
   streakMeterFill: {
-    height: 8,
-    borderRadius: 4,
+    height: scaleHeight(8),
+    borderRadius: scaleHeight(4),
   },
   streakGoal: {
     fontSize: FontSize.xs,
@@ -175,7 +180,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
   },
-  statEmoji: { fontSize: 20, marginBottom: 4 },
+  statEmoji: { fontSize: scaleFont(20), marginBottom: scaleHeight(4) },
   statValue: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
@@ -195,22 +200,24 @@ const styles = StyleSheet.create({
   badgeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.md,
+    justifyContent: 'space-between',
+    rowGap: Spacing.md,
   },
   badgeCard: {
-    width: '47%',
-    padding: Spacing.lg,
+    width: '48%',
+    padding: Spacing.md,
+    minHeight: scaleHeight(165),
   },
   badgeCardEarned: {
     borderColor: Colors.safe + '30',
   },
   badgeCardLocked: {
-    opacity: 0.75,
+    opacity: 0.7,
   },
   badgeIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: scaleWidth(44),
+    height: scaleWidth(44),
+    borderRadius: scaleWidth(12),
     backgroundColor: 'rgba(255,255,255,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -219,7 +226,7 @@ const styles = StyleSheet.create({
   badgeIconEarned: {
     backgroundColor: Colors.safe + '15',
   },
-  badgeIcon: { fontSize: 24 },
+  badgeIcon: { fontSize: scaleFont(22) },
   badgeTitle: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
@@ -231,6 +238,7 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     lineHeight: 16,
     marginBottom: Spacing.md,
+    flex: 1,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -239,14 +247,14 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     flex: 1,
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 2,
+    height: scaleHeight(4),
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: scaleHeight(2),
     overflow: 'hidden',
   },
   progressFill: {
-    height: 4,
-    borderRadius: 2,
+    height: scaleHeight(4),
+    borderRadius: scaleHeight(2),
   },
   progressText: {
     fontSize: FontSize.xs,

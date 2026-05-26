@@ -11,6 +11,7 @@ import { GlassCard, StatCard, StatusBadge } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { mockTeens, mockTrips } from '../../constants/mockData';
 import { Trip } from '../../types';
+import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 export const TeenDashboard = ({ navigation }: any) => {
   const teen = mockTeens[0];
@@ -87,18 +88,21 @@ export const TeenDashboard = ({ navigation }: any) => {
 
         {/* Speed Gauge */}
         <View style={styles.gaugeContainer}>
-          <SpeedGauge speed={speed} speedLimit={teen.speed_limit} />
+          <SpeedGauge speed={speed} speedLimit={teen.speed_limit} size={scaleWidth(280)} />
         </View>
 
         {/* Drive Toggle Button */}
         <TouchableOpacity
-          style={[styles.driveBtn, isDriving && styles.driveBtnActive]}
+          style={styles.driveBtn}
           onPress={() => setIsDriving(!isDriving)}
           activeOpacity={0.8}
         >
           <LinearGradient
             colors={isDriving ? ['#FF3B30', '#FF6961'] : ['#34C759', '#30D158']}
-            style={styles.driveBtnGradient}
+            style={[
+              styles.driveBtnGradient,
+              isDriving ? Shadow.glow(Colors.danger) : Shadow.glow(Colors.safe)
+            ]}
           >
             <Ionicons name={isDriving ? 'stop' : 'play'} size={24} color="#fff" />
             <Text style={styles.driveBtnText}>
@@ -109,7 +113,7 @@ export const TeenDashboard = ({ navigation }: any) => {
 
         {/* Trip Stats */}
         <View style={styles.statsRow}>
-          <StatCard label="Duration" value={tripDuration} icon="⏱️" color={Colors.primary} />
+          <StatCard label="Duration" value={tripDuration} icon="⏱️" color={Colors.primaryLight} />
           <View style={{ width: Spacing.md }} />
           <StatCard label="Distance" value={`${tripDistance} km`} icon="📏" color={Colors.primaryLight} />
           <View style={{ width: Spacing.md }} />
@@ -128,7 +132,7 @@ export const TeenDashboard = ({ navigation }: any) => {
                 colors={['#FF3B30', '#FF6961']}
                 style={styles.sosBtnGradient}
               >
-                <Ionicons name="alert-circle" size={28} color="#fff" />
+                <Ionicons name="alert-circle" size={32} color="#fff" />
                 <Text style={styles.sosBtnText}>SOS</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -140,7 +144,7 @@ export const TeenDashboard = ({ navigation }: any) => {
         <View style={styles.recentSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Trips</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Trips')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Trips')} activeOpacity={0.7}>
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -178,8 +182,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
-    paddingBottom: 100,
+    paddingTop: scaleHeight(60),
+    paddingBottom: scaleHeight(100),
   },
   header: {
     flexDirection: 'row',
@@ -207,13 +211,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.round,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: scaleWidth(14),
+    paddingVertical: scaleHeight(8),
     borderWidth: 1,
     borderColor: Colors.border,
     gap: 4,
   },
-  streakIcon: { fontSize: 16 },
+  streakIcon: { fontSize: scaleFont(16) },
   streakText: {
     color: Colors.warning,
     fontWeight: FontWeight.bold,
@@ -239,18 +243,16 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.lg,
   },
   driveBtn: {
-    marginHorizontal: Spacing.xxxl,
+    marginHorizontal: scaleWidth(20),
     marginBottom: Spacing.xxl,
   },
-  driveBtnActive: {},
   driveBtnGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 56,
+    height: scaleHeight(56),
     borderRadius: BorderRadius.xl,
     gap: Spacing.md,
-    ...Shadow.md,
   },
   driveBtnText: {
     color: '#fff',
@@ -269,12 +271,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   sosBtnGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: scaleWidth(88),
+    height: scaleWidth(88),
+    borderRadius: scaleWidth(44),
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadow.lg,
+    ...Shadow.glow(Colors.danger),
   },
   sosBtnText: {
     color: '#fff',
@@ -302,7 +304,7 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     fontSize: FontSize.sm,
-    color: Colors.primary,
+    color: Colors.primaryLight,
     fontWeight: FontWeight.semibold,
   },
   tripCard: {

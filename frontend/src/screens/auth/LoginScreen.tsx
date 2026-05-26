@@ -7,7 +7,8 @@ import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platfor
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassInput, GradientButton } from '../../components/common';
-import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
+import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
+import { scaleWidth, scaleHeight } from '../../utils/responsive';
 
 export const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -39,10 +40,10 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
               <LinearGradient
-                colors={['#007AFF', '#00C6FF']}
+                colors={Colors.gradientPrimary as any}
                 style={styles.logoGradient}
               >
-                <Ionicons name="speedometer" size={40} color="#fff" />
+                <Ionicons name="speedometer" size={scaleWidth(40)} color="#fff" />
               </LinearGradient>
             </View>
             <Text style={styles.appName}>SpeedxSafety</Text>
@@ -69,7 +70,7 @@ export const LoginScreen = ({ navigation }: any) => {
               icon={<Ionicons name="lock-closed-outline" size={20} color={Colors.textTertiary} />}
             />
 
-            <TouchableOpacity style={styles.forgotBtn}>
+            <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.7}>
               <Text style={styles.forgotText}>Forgot password?</Text>
             </TouchableOpacity>
 
@@ -88,13 +89,15 @@ export const LoginScreen = ({ navigation }: any) => {
                 <TouchableOpacity 
                   style={styles.demoBtn}
                   onPress={() => navigation.replace('ParentTabs')}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="shield-checkmark" size={18} color={Colors.primary} />
+                  <Ionicons name="shield-checkmark" size={18} color={Colors.primaryLight} />
                   <Text style={styles.demoBtnText}>Parent View</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={styles.demoBtn}
                   onPress={() => navigation.replace('TeenTabs')}
+                  activeOpacity={0.7}
                 >
                   <Ionicons name="car-sport" size={18} color={Colors.safe} />
                   <Text style={[styles.demoBtnText, { color: Colors.safe }]}>Teen View</Text>
@@ -106,7 +109,7 @@ export const LoginScreen = ({ navigation }: any) => {
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')} activeOpacity={0.7}>
               <Text style={styles.footerLink}> Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -134,16 +137,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   logoGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: scaleWidth(80),
+    height: scaleWidth(80),
+    borderRadius: scaleWidth(24),
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    ...Shadow.glow(Colors.primary),
   },
   appName: {
     fontSize: FontSize.xxxl,
@@ -164,7 +163,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   forgotText: {
-    color: Colors.primary,
+    color: Colors.primaryLight,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
@@ -188,32 +187,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.border,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: scaleWidth(16),
+    paddingVertical: scaleHeight(12),
     gap: Spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Shadow.sm,
   },
   demoBtnText: {
-    color: Colors.primary,
+    color: Colors.primaryLight,
     fontWeight: FontWeight.semibold,
     fontSize: FontSize.sm,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    paddingBottom: Spacing.md,
   },
   footerText: {
     color: Colors.textTertiary,
     fontSize: FontSize.md,
   },
   footerLink: {
-    color: Colors.primary,
+    color: Colors.primaryLight,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },

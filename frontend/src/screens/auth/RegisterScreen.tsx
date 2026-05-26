@@ -6,8 +6,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassInput, GradientButton, GlassCard } from '../../components/common';
-import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
+import { GlassInput, GradientButton } from '../../components/common';
+import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
+import { scaleWidth, scaleHeight } from '../../utils/responsive';
 import { UserRole } from '../../types';
 
 export const RegisterScreen = ({ navigation }: any) => {
@@ -32,7 +33,7 @@ export const RegisterScreen = ({ navigation }: any) => {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { minHeight: height }]} keyboardShouldPersistTaps="handled">
           {/* Header */}
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
             <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
           </TouchableOpacity>
           
@@ -45,9 +46,10 @@ export const RegisterScreen = ({ navigation }: any) => {
             <TouchableOpacity
               style={[styles.roleCard, role === 'parent' && styles.roleCardActive]}
               onPress={() => setRole('parent')}
+              activeOpacity={0.8}
             >
               <LinearGradient
-                colors={role === 'parent' ? ['#007AFF', '#00C6FF'] : ['transparent', 'transparent']}
+                colors={role === 'parent' ? Colors.gradientPrimary as any : ['transparent', 'transparent']}
                 style={styles.roleIconBg}
               >
                 <Ionicons name="shield-checkmark" size={28} color={role === 'parent' ? '#fff' : Colors.textTertiary} />
@@ -59,9 +61,10 @@ export const RegisterScreen = ({ navigation }: any) => {
             <TouchableOpacity
               style={[styles.roleCard, role === 'teen' && styles.roleCardActiveTeen]}
               onPress={() => setRole('teen')}
+              activeOpacity={0.8}
             >
               <LinearGradient
-                colors={role === 'teen' ? ['#34C759', '#30D158'] : ['transparent', 'transparent']}
+                colors={role === 'teen' ? Colors.gradientSafe as any : ['transparent', 'transparent']}
                 style={styles.roleIconBg}
               >
                 <Ionicons name="car-sport" size={28} color={role === 'teen' ? '#fff' : Colors.textTertiary} />
@@ -115,7 +118,7 @@ export const RegisterScreen = ({ navigation }: any) => {
                 onPress={handleRegister}
                 loading={loading}
                 size="lg"
-                colors={role === 'parent' ? Colors.gradientPrimary as any : Colors.gradientSafe as any}
+                colors={role === 'parent' ? (Colors.gradientPrimary as any) : (Colors.gradientSafe as any)}
                 style={{ marginTop: Spacing.xxl }}
               />
             </View>
@@ -124,7 +127,7 @@ export const RegisterScreen = ({ navigation }: any) => {
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7}>
               <Text style={styles.footerLink}> Sign In</Text>
             </TouchableOpacity>
           </View>
@@ -143,13 +146,15 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.huge,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: scaleWidth(40),
+    height: scaleWidth(40),
+    borderRadius: scaleWidth(12),
     backgroundColor: Colors.bgCard,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xxl,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   title: {
     fontSize: FontSize.xxxl,
@@ -178,28 +183,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.xl,
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: Colors.border,
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Shadow.sm,
   },
   roleCardActive: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: 'rgba(0, 122, 255, 0.12)',
+    ...Shadow.glow(Colors.primary),
   },
   roleCardActiveTeen: {
     borderColor: Colors.safe,
-    backgroundColor: Colors.safe + '10',
+    backgroundColor: 'rgba(52, 199, 89, 0.12)',
+    ...Shadow.glow(Colors.safe),
   },
   roleIconBg: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: scaleWidth(56),
+    height: scaleWidth(56),
+    borderRadius: scaleWidth(16),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   roleLabelActive: {
-    color: Colors.primary,
+    color: Colors.primaryLight,
   },
   roleDesc: {
     fontSize: FontSize.xs,
@@ -230,7 +233,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: Spacing.xl,
+    paddingBottom: Spacing.md,
   },
   footerText: { color: Colors.textTertiary, fontSize: FontSize.md },
-  footerLink: { color: Colors.primary, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  footerLink: { color: Colors.primaryLight, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
 });

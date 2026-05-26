@@ -6,10 +6,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassCard, StatusBadge } from '../../components/common';
+import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
 import { mockTrips } from '../../constants/mockData';
 import { Trip } from '../../types';
+import { scaleWidth, scaleHeight } from '../../utils/responsive';
 
 const gradeColor = (g: string) =>
   g === 'A' ? Colors.safe : g === 'B' ? Colors.primaryLight : g === 'C' ? Colors.warning : Colors.danger;
@@ -60,7 +61,7 @@ export const TripHistoryScreen = () => {
             <GlassCard style={[styles.tripCard, selectedTrip === trip.trip_id && styles.tripCardExpanded]}>
               <View style={styles.tripHeader}>
                 <View style={styles.tripLeft}>
-                  <View style={[styles.gradeCircle, { backgroundColor: gradeColor(trip.safety_grade) + '20', borderColor: gradeColor(trip.safety_grade) }]}>
+                  <View style={[styles.gradeCircle, { backgroundColor: gradeColor(trip.safety_grade) + '1A', borderColor: gradeColor(trip.safety_grade) }]}>
                     <Text style={[styles.gradeText, { color: gradeColor(trip.safety_grade) }]}>{trip.safety_grade}</Text>
                   </View>
                   <View>
@@ -125,7 +126,11 @@ export const TripHistoryScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: 60, paddingBottom: 100 },
+  scrollContent: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: scaleHeight(60),
+    paddingBottom: scaleHeight(100),
+  },
   title: {
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
@@ -145,7 +150,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
-    color: Colors.primary,
+    color: Colors.primaryLight,
   },
   summaryLabel: {
     fontSize: FontSize.xs,
@@ -156,7 +161,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   tripCardExpanded: {
-    borderColor: Colors.primary + '30',
+    borderColor: Colors.primaryLight + '30',
   },
   tripHeader: {
     flexDirection: 'row',
@@ -169,12 +174,12 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   gradeCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: scaleWidth(40),
+    height: scaleWidth(40),
+    borderRadius: scaleWidth(20),
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1.2,
   },
   gradeText: {
     fontSize: FontSize.md,
@@ -218,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     marginTop: Spacing.lg,
-    backgroundColor: Colors.warning + '15',
+    backgroundColor: 'rgba(255, 149, 0, 0.12)',
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
   },

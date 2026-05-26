@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
 import { mockAlerts } from '../../constants/mockData';
+import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 type FilterType = 'all' | 'speed' | 'geo' | 'crash' | 'curfew';
 
@@ -50,7 +51,7 @@ export const AlertHistoryScreen = () => {
     : mockAlerts.filter(a => a.type === activeFilter);
 
   return (
-    <LinearGradient colors={['#0A0E27', '#111538', '#1A1E3A']} style={styles.container}>
+    <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Alert History</Text>
 
@@ -89,6 +90,7 @@ export const AlertHistoryScreen = () => {
               key={f.key}
               style={[styles.filterChip, activeFilter === f.key && styles.filterChipActive]}
               onPress={() => setActiveFilter(f.key)}
+              activeOpacity={0.7}
             >
               <Ionicons
                 name={f.icon as any}
@@ -106,7 +108,7 @@ export const AlertHistoryScreen = () => {
         {filtered.map(alert => (
           <GlassCard key={alert.alert_id} style={[styles.alertCard, !alert.read && styles.alertUnread]}>
             <View style={styles.alertRow}>
-              <View style={[styles.alertIconBg, { backgroundColor: getAlertColor(alert.type) + '15' }]}>
+              <View style={[styles.alertIconBg, { backgroundColor: getAlertColor(alert.type) + '1A' }]}>
                 <Ionicons name={getAlertIcon(alert.type)} size={22} color={getAlertColor(alert.type)} />
               </View>
               <View style={styles.alertContent}>
@@ -124,7 +126,7 @@ export const AlertHistoryScreen = () => {
                       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     })}
                   </Text>
-                  <Ionicons name="person-outline" size={12} color={Colors.textTertiary} style={{ marginLeft: 12 }} />
+                  <Ionicons name="person-outline" size={12} color={Colors.textTertiary} style={{ marginLeft: scaleWidth(12) }} />
                   <Text style={styles.alertTime}>{alert.teen_name}</Text>
                 </View>
                 {alert.speed_recorded && (
@@ -152,7 +154,7 @@ export const AlertHistoryScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: 60, paddingBottom: 100 },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: scaleHeight(60), paddingBottom: scaleHeight(100) },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.xxl },
   summaryRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.xxl },
   summaryCard: { flex: 1, alignItems: 'center', padding: Spacing.md },
@@ -165,38 +167,38 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.round,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: scaleWidth(16),
+    paddingVertical: scaleHeight(8),
     marginRight: Spacing.sm,
-    borderWidth: 1,
+    borderWidth: 1.2,
     borderColor: Colors.border,
   },
   filterChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   filterLabel: { fontSize: FontSize.sm, color: Colors.textTertiary, fontWeight: FontWeight.medium },
   filterLabelActive: { color: '#fff' },
   alertCard: { marginBottom: Spacing.md },
-  alertUnread: { borderColor: Colors.primary + '30' },
+  alertUnread: { borderColor: Colors.primaryLight + '30' },
   alertRow: { flexDirection: 'row', gap: Spacing.md },
   alertIconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: scaleWidth(44),
+    height: scaleWidth(44),
+    borderRadius: scaleWidth(14),
     justifyContent: 'center',
     alignItems: 'center',
   },
   alertContent: { flex: 1 },
   alertTopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: 4 },
   alertType: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.primary },
+  unreadDot: { width: scaleWidth(6), height: scaleWidth(6), borderRadius: scaleWidth(3), backgroundColor: Colors.primaryLight },
   alertMessage: { fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20, marginBottom: 6 },
   alertMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   alertTime: { fontSize: FontSize.xs, color: Colors.textTertiary },
   speedTag: {
-    marginTop: 8,
-    backgroundColor: Colors.danger + '15',
+    marginTop: scaleHeight(8),
+    backgroundColor: 'rgba(255, 59, 48, 0.12)',
     borderRadius: BorderRadius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: scaleWidth(10),
+    paddingVertical: scaleHeight(4),
     alignSelf: 'flex-start',
   },
   speedTagText: { fontSize: FontSize.xs, color: Colors.danger, fontWeight: FontWeight.semibold },

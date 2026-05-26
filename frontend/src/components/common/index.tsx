@@ -11,11 +11,11 @@ import {
   TextInput,
   ActivityIndicator,
   ViewStyle,
-  TextStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 // ---- Glass Card ----
 interface GlassCardProps {
@@ -26,7 +26,7 @@ interface GlassCardProps {
 
 export const GlassCard: React.FC<GlassCardProps> = ({ children, style, onPress }) => {
   const content = (
-    <BlurView intensity={60} tint="light" style={[styles.glassCard, style]}>
+    <BlurView intensity={65} tint="dark" style={[styles.glassCard, style]}>
       {children}
     </BlurView>
   );
@@ -51,7 +51,7 @@ interface GradientButtonProps {
 export const GradientButton: React.FC<GradientButtonProps> = ({
   title, onPress, colors, icon, disabled, loading, size = 'md', style,
 }) => {
-  const height = size === 'sm' ? 40 : size === 'lg' ? 56 : 48;
+  const height = size === 'sm' ? scaleHeight(40) : size === 'lg' ? scaleHeight(56) : scaleHeight(48);
   const fontSize = size === 'sm' ? FontSize.sm : size === 'lg' ? FontSize.lg : FontSize.md;
 
   return (
@@ -89,7 +89,7 @@ interface GlassInputProps {
 export const GlassInput: React.FC<GlassInputProps> = ({
   placeholder, value, onChangeText, icon, secureTextEntry, keyboardType, style,
 }) => (
-  <BlurView intensity={50} tint="light" style={[styles.glassInput, style]}>
+  <BlurView intensity={55} tint="dark" style={[styles.glassInput, style]}>
     {icon && <View style={styles.inputIcon}>{icon}</View>}
     <TextInput
       placeholder={placeholder}
@@ -111,7 +111,7 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ label, color, small }) => (
-  <View style={[styles.statusBadge, { backgroundColor: color + '20' }, small && { paddingHorizontal: 8, paddingVertical: 2 }]}>
+  <View style={[styles.statusBadge, { backgroundColor: color + '1A' }, small && { paddingHorizontal: scaleWidth(8), paddingVertical: scaleHeight(2) }]}>
     <View style={[styles.statusDot, { backgroundColor: color }]} />
     <Text style={[styles.statusText, { color }, small && { fontSize: FontSize.xs }]}>{label}</Text>
   </View>
@@ -126,8 +126,8 @@ interface StatCardProps {
 }
 
 export const StatCard: React.FC<StatCardProps> = ({ label, value, icon, color = Colors.primary }) => (
-  <BlurView intensity={60} tint="light" style={styles.statCard}>
-    {icon && <Text style={{ fontSize: 20, marginBottom: 4 }}>{icon}</Text>}
+  <BlurView intensity={65} tint="dark" style={styles.statCard}>
+    {icon && <Text style={{ fontSize: scaleFont(20), marginBottom: scaleHeight(4) }}>{icon}</Text>}
     <Text style={[styles.statValue, { color }]}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
   </BlurView>
@@ -144,7 +144,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, action, onA
   <View style={styles.sectionHeader}>
     <Text style={styles.sectionTitle}>{title}</Text>
     {action && (
-      <TouchableOpacity onPress={onAction}>
+      <TouchableOpacity onPress={onAction} activeOpacity={0.7}>
         <Text style={styles.sectionAction}>{action}</Text>
       </TouchableOpacity>
     )}
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   glassCard: {
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.xl,
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: Colors.border,
     padding: Spacing.lg,
     overflow: 'hidden',
@@ -181,12 +181,12 @@ const styles = StyleSheet.create({
   glassInput: {
     backgroundColor: Colors.bgGlass,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    height: 52,
+    height: scaleHeight(52),
     overflow: 'hidden',
   },
   inputIcon: {
@@ -200,15 +200,15 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: scaleWidth(12),
+    paddingVertical: scaleHeight(6),
     borderRadius: BorderRadius.round,
   },
   statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
+    width: scaleWidth(6),
+    height: scaleWidth(6),
+    borderRadius: scaleWidth(3),
+    marginRight: scaleWidth(6),
   },
   statusText: {
     fontSize: FontSize.sm,
@@ -218,11 +218,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: Colors.border,
     padding: Spacing.md,
     alignItems: 'center',
     overflow: 'hidden',
+    ...Shadow.sm,
   },
   statValue: {
     fontSize: FontSize.xl,
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: FontSize.xs,
     color: Colors.textTertiary,
-    marginTop: 2,
+    marginTop: scaleHeight(2),
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

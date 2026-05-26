@@ -6,6 +6,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { Colors, FontSize, FontWeight } from '../constants/theme';
+import { scaleWidth, scaleHeight, scaleFont } from '../utils/responsive';
 
 interface SpeedGaugeProps {
   speed: number;
@@ -15,13 +16,13 @@ interface SpeedGaugeProps {
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-export const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, speedLimit, size = 280 }) => {
+export const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, speedLimit, size = scaleWidth(280) }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const isOverLimit = speed > speedLimit;
   const percentage = Math.min(speed / (speedLimit * 1.5), 1);
-  const strokeWidth = 12;
+  const strokeWidth = scaleWidth(12);
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const arcAngle = 0.75; // 270 degrees
@@ -66,7 +67,7 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, speedLimit, size 
         <Defs>
           <SvgGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor={isOverLimit ? Colors.danger : Colors.safe} />
-            <Stop offset="1" stopColor={isOverLimit ? '#FF6961' : Colors.primary} />
+            <Stop offset="1" stopColor={isOverLimit ? '#FF6961' : Colors.primaryLight} />
           </SvgGradient>
         </Defs>
 
@@ -75,7 +76,7 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, speedLimit, size 
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(255,255,255,0.08)"
+          stroke="rgba(255,255,255,0.06)"
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={`${arcLength} ${circumference - arcLength}`}
@@ -136,12 +137,12 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   limitBadge: {
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    borderRadius: 20,
+    marginTop: scaleHeight(12),
+    paddingHorizontal: scaleWidth(16),
+    paddingVertical: scaleHeight(4),
+    borderRadius: scaleWidth(20),
     borderWidth: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   limitText: {
     fontSize: FontSize.xs,
