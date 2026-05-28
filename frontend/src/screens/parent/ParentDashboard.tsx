@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, StatusBadge, SectionHeader } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { mockTeens, mockAlerts } from '../../constants/mockData';
+import { mockTeens, mockAlerts } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 export const ParentDashboard = ({ navigation }: any) => {

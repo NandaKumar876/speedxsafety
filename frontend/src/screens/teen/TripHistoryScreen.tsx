@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
-import { mockTrips } from '../../constants/mockData';
+import { mockTrips } from '../../data/mockData';
 import { Trip } from '../../types';
 import { scaleWidth, scaleHeight } from '../../utils/responsive';
 

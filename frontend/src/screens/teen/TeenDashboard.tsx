@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SpeedGauge } from '../../components/SpeedGauge';
 import { GlassCard, StatCard, StatusBadge } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { mockTeens, mockTrips } from '../../constants/mockData';
+import { mockTeens, mockTrips } from '../../data/mockData';
 import { Trip } from '../../types';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 

@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
-import { mockAlerts } from '../../constants/mockData';
+import { mockAlerts } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 type FilterType = 'all' | 'speed' | 'geo' | 'crash' | 'curfew';

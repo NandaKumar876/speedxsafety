@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect, Line, Circle as SvgCircle, Polyline } from 'react-native-svg';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, getGradeColor } from '../../constants/theme';
-import { mockWeeklyReport, mockTeens } from '../../constants/mockData';
+import { mockWeeklyReport, mockTeens } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];

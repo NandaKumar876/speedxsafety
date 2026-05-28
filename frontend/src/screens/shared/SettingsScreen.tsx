@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, GradientButton } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
-import { mockTeens } from '../../constants/mockData';
+import { mockTeens } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 export const SettingsScreen = ({ navigation }: any) => {
