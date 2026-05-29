@@ -80,6 +80,10 @@ const isInsideGeofence = (lat, lng, centerLat, centerLng, radiusM) => {
  * @returns {boolean}
  */
 const isInCurfew = (curfewStart, curfewEnd) => {
+  if (!curfewStart || !curfewEnd || !/^\d{1,2}:\d{2}$/.test(curfewStart) || !/^\d{1,2}:\d{2}$/.test(curfewEnd)) {
+    return false;
+  }
+
   const now = new Date();
   const current = now.getHours() * 60 + now.getMinutes();
 

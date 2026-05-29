@@ -36,7 +36,7 @@ npm install
 npm start
 ```
 
-# Running Backend Only
+## Running Backend Only
 
 If you only need to work on the backend APIs:
 
@@ -46,11 +46,9 @@ npm install
 npm run dev
 ```
 
-# Contributing
+## Contributing
 
 1. Create a feature branch (`git checkout -b feature/my-feature`)
 2. Commit your changes (`git commit -m 'Add some feature'`)
 3. Push to the branch (`git push origin feature/my-feature`)
 4. Open a pull request
-5. 
-   
