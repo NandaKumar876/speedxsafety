@@ -13,3 +13,6 @@ Data is primarily stored in a NoSQL structure with collections for Users (Parent
 
 ## 4. Security and Authentication
 The application uses JWT (JSON Web Tokens) for authenticating API requests. Passwords are securely hashed using bcrypt before being stored in the database. End-to-end encryption is used for sensitive data transmissions between the mobile app and the backend.
+
+## 5. Deployment Strategy
+The backend is containerized using Docker and is intended to be orchestrated via Kubernetes on a major cloud provider (e.g., AWS or GCP). The mobile application is distributed through App Store Connect (iOS) and Google Play Console (Android) via Expo EAS Build services.
