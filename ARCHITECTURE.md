@@ -16,3 +16,6 @@ The application uses JWT (JSON Web Tokens) for authenticating API requests. Pass
 
 ## 5. Deployment Strategy
 The backend is containerized using Docker and is intended to be orchestrated via Kubernetes on a major cloud provider (e.g., AWS or GCP). The mobile application is distributed through App Store Connect (iOS) and Google Play Console (Android) via Expo EAS Build services.
+
+## 6. API Strategy
+All backend APIs are documented using OpenAPI (Swagger) specifications. This provides an interactive documentation dashboard and ensures that the frontend clients remain synchronized with backend updates through auto-generated types and interfaces.
