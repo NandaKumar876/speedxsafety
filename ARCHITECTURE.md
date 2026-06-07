@@ -10,3 +10,6 @@ The backend is powered by Node.js and Express. It exposes RESTful APIs for user 
 
 ## 3. Database Schema
 Data is primarily stored in a NoSQL structure with collections for Users (Parents and Teens), Vehicles, Telemetry Data (speed, location), and Incidents. This allows for fast insertions of streaming telemetry data from the mobile devices.
+
+## 4. Security and Authentication
+The application uses JWT (JSON Web Tokens) for authenticating API requests. Passwords are securely hashed using bcrypt before being stored in the database. End-to-end encryption is used for sensitive data transmissions between the mobile app and the backend.
