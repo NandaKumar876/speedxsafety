@@ -6,9 +6,9 @@ import { scaleWidth, scaleHeight, scaleFont } from '../utils/responsive';
 
 export const Colors = {
   // Primary palette
-  primary: '#00E5FF',
-  primaryLight: '#00FFCC',
-  primaryDark: '#00838F',
+  primary: '#B238FF',
+  primaryLight: '#D988FF',
+  primaryDark: '#7A00CC',
 
   // Safety colors
   safe: '#34C759',
@@ -37,11 +37,11 @@ export const Colors = {
   borderLight: 'rgba(255, 255, 255, 0.04)',
 
   // Gradients (used as arrays)
-  gradientPrimary: ['#00E5FF', '#00FFCC'],
+  gradientPrimary: ['#B238FF', '#00E5FF'],
   gradientSafe: ['#34C759', '#30D158'],
   gradientWarning: ['#FF9500', '#FFCC00'],
   gradientDanger: ['#FF3B30', '#FF6961'],
-  gradientBg: ['#050714', '#0D1130', '#161B46'], // Dark gradient background
+  gradientBg: ['#05020B', '#0A071A', '#110D29'], // Dark gradient background
   gradientCard: ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.01)'],
 
   // Grade colors
