@@ -4,7 +4,7 @@ SpeedxSafety is a robust mobile application designed to ensure the safety of tee
 
 ## Project Structure
 
-This project follows a clean, decoupled architecture:
+This project follows a clean, decoupled architecture. For detailed architectural patterns and flow, please refer to [ARCHITECTURE.md](./ARCHITECTURE.md):
 
 - **/frontend** - Contains the React Native (Expo) mobile application. Features a dynamic UI with a liquid glass aesthetic, role-based dashboards (Parent vs. Teen), and real-time monitoring components.
 - **/backend** - Contains the backend services/API to handle authentication, trip data processing, and telemetry storage.
