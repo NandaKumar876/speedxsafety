@@ -5,10 +5,10 @@
 import { scaleWidth, scaleHeight, scaleFont } from '../utils/responsive';
 
 export const Colors = {
-  // Primary palette
-  primary: '#B238FF',
-  primaryLight: '#D988FF',
-  primaryDark: '#7A00CC',
+  // Primary palette (Emerald Green / Teal)
+  primary: '#10B981',
+  primaryLight: '#6EE7B7',
+  primaryDark: '#047857',
 
   // Safety colors
   safe: '#34C759',
@@ -18,30 +18,30 @@ export const Colors = {
   danger: '#FF3B30',
   dangerLight: '#FF6961',
   
-  // Backgrounds (Unified Dark Mode)
-  bgPrimary: '#060919',      // Deep space black
-  bgSecondary: '#0D1130',    // Dark navy card backdrop
-  bgTertiary: '#161B46',     // Slightly lighter navy accent
+  // Backgrounds (Unified Dark Mode – green-tinted)
+  bgPrimary: '#040E0C',      // Deep dark green-black
+  bgSecondary: '#081F1A',    // Dark teal card backdrop
+  bgTertiary: '#0F3A31',     // Slightly lighter emerald accent
   bgCard: 'rgba(255, 255, 255, 0.04)',      // Semi-transparent for liquid glass
   bgCardHover: 'rgba(255, 255, 255, 0.08)',
   bgGlass: 'rgba(255, 255, 255, 0.03)',
 
   // Text
   textPrimary: '#FFFFFF',    // High contrast white
-  textSecondary: '#9CA5C9',  // Soft bluish-gray
-  textTertiary: '#606A93',   // Muted bluish-gray
-  textInverse: '#060919',    // Dark text on bright backgrounds
+  textSecondary: '#94B8AD',  // Soft greenish-gray
+  textTertiary: '#5A7D72',   // Muted greenish-gray
+  textInverse: '#040E0C',    // Dark text on bright backgrounds
 
   // Borders
   border: 'rgba(255, 255, 255, 0.08)',      // Frosty subtle white borders
   borderLight: 'rgba(255, 255, 255, 0.04)',
 
   // Gradients (used as arrays)
-  gradientPrimary: ['#B238FF', '#00E5FF'],
+  gradientPrimary: ['#10B981', '#14B8A6'],
   gradientSafe: ['#34C759', '#30D158'],
   gradientWarning: ['#FF9500', '#FFCC00'],
   gradientDanger: ['#FF3B30', '#FF6961'],
-  gradientBg: ['#05020B', '#0A071A', '#110D29'], // Dark gradient background
+  gradientBg: ['#020806', '#041210', '#081F1A'], // Dark emerald gradient background
   gradientCard: ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.01)'],
 
   // Grade colors
