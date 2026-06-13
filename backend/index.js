@@ -11,6 +11,7 @@ dotenv.config();
 
 // Middleware
 const { requestLogger, notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const { apiLimiter, authLimiter, telemetryLimiter, alertLimiter } = require('./middleware/rateLimiter');
 
 // Route modules
 const authRoutes = require('./routes/auth');
@@ -26,7 +27,7 @@ const PORT = process.env.PORT || 3000;
 
 // ── Global Middleware ────────────────────────
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));   // Guard against oversized payloads
 app.use(requestLogger);
 
 // ── Health Check ─────────────────────────────
@@ -53,14 +54,14 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// ── API Routes ───────────────────────────────
-app.use('/api/auth', authRoutes);
-app.use('/api/teens', teensRoutes);
-app.use('/api/trips', tripsRoutes);
-app.use('/api/alerts', alertsRoutes);
-app.use('/api/geofences', geofencesRoutes);
-app.use('/api/badges', badgesRoutes);
-app.use('/api/reports', reportsRoutes);
+// ── API Routes (with per-group rate limiting) ─
+app.use('/api/auth', authLimiter, authRoutes);             // strict: 10 req/min
+app.use('/api/teens', telemetryLimiter, teensRoutes);      // generous: 300 req/min (location pings)
+app.use('/api/trips', apiLimiter, tripsRoutes);             // standard: 100 req/min
+app.use('/api/alerts', alertLimiter, alertsRoutes);         // moderate: 30 req/min
+app.use('/api/geofences', apiLimiter, geofencesRoutes);     // standard: 100 req/min
+app.use('/api/badges', apiLimiter, badgesRoutes);           // standard: 100 req/min
+app.use('/api/reports', apiLimiter, reportsRoutes);         // standard: 100 req/min
 
 // ── Error Handling ───────────────────────────
 app.use(notFoundHandler);
