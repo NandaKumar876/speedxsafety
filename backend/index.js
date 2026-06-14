@@ -26,7 +26,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Global Middleware ────────────────────────
-app.use(cors());
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+  : '*';
+app.use(cors({
+  origin: corsOrigins,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: corsOrigins !== '*',
+}));
 app.use(express.json({ limit: '10kb' }));   // Guard against oversized payloads
 app.use(requestLogger);
 
@@ -68,7 +76,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // ── Start Server ─────────────────────────────
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n🚗 SpeedxSafety Backend is running on port ${PORT}`);
   console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
   console.log(`💚 Health Check: http://localhost:${PORT}/api/health`);
@@ -101,3 +109,21 @@ app.listen(PORT, () => {
   console.log(`  GET    /api/reports/summary/:teenId`);
   console.log(`────────────────────────────────────────\n`);
 });
+
+// ── Graceful Shutdown ────────────────────────
+const shutdown = (signal) => {
+  console.log(`\n⚡ Received ${signal}. Shutting down gracefully...`);
+  server.close(() => {
+    console.log('✅ All connections closed. Goodbye!');
+    process.exit(0);
+  });
+
+  // Force exit if connections aren't closed within 10 seconds
+  setTimeout(() => {
+    console.error('⚠️  Forced shutdown — connections did not close in time.');
+    process.exit(1);
+  }, 10_000).unref();
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
