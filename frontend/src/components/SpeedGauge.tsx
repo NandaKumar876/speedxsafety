@@ -61,15 +61,41 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, speedLimit, size 
     return Colors.safe;
   };
 
+  // Tick marks
+  const tickCount = 12;
+  const ticks = Array.from({ length: tickCount }, (_, i) => {
+    const angle = 135 + (270 / (tickCount - 1)) * i;
+    const rad = (angle * Math.PI) / 180;
+    const innerR = radius - scaleWidth(20);
+    const outerR = radius - scaleWidth(10);
+    return {
+      x1: size / 2 + Math.cos(rad) * innerR,
+      y1: size / 2 + Math.sin(rad) * innerR,
+      x2: size / 2 + Math.cos(rad) * outerR,
+      y2: size / 2 + Math.sin(rad) * outerR,
+    };
+  });
+
   return (
     <Animated.View style={[styles.container, { transform: [{ scale: pulseAnim }] }]}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <Defs>
           <SvgGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor={isOverLimit ? Colors.danger : Colors.safe} />
-            <Stop offset="1" stopColor={isOverLimit ? '#FF6961' : Colors.primaryLight} />
+            <Stop offset="1" stopColor={isOverLimit ? Colors.dangerLight : Colors.primaryLight} />
           </SvgGradient>
         </Defs>
+
+        {/* Tick marks */}
+        {ticks.map((tick, i) => (
+          <Circle
+            key={i}
+            cx={tick.x2}
+            cy={tick.y2}
+            r={i % 3 === 0 ? 2 : 1}
+            fill={i <= (percentage * (tickCount - 1)) ? getSpeedColor() + '80' : 'rgba(255,255,255,0.1)'}
+          />
+        ))}
 
         {/* Background arc */}
         <Circle

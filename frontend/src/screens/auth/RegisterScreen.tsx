@@ -2,8 +2,8 @@
 // SpeedxSafety - Register Screen
 // ============================================
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, useWindowDimensions, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassInput, GradientButton } from '../../components/common';
@@ -19,6 +19,16 @@ export const RegisterScreen = ({ navigation }: any) => {
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const { height } = useWindowDimensions();
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const handleRegister = () => {
     setLoading(true);
@@ -37,8 +47,10 @@ export const RegisterScreen = ({ navigation }: any) => {
             <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
           </TouchableOpacity>
           
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join SpeedxSafety to keep your family safe on the road</Text>
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join SpeedxSafety to keep your family safe on the road</Text>
+          </Animated.View>
 
           {/* Role Selection */}
           <Text style={styles.label}>I am a...</Text>
@@ -49,7 +61,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={role === 'parent' ? Colors.gradientPrimary as any : ['transparent', 'transparent']}
+                colors={role === 'parent' ? ['#4F46E5', '#6C63FF'] : ['transparent', 'transparent']}
                 style={styles.roleIconBg}
               >
                 <Ionicons name="shield-checkmark" size={28} color={role === 'parent' ? '#fff' : Colors.textTertiary} />
@@ -64,12 +76,12 @@ export const RegisterScreen = ({ navigation }: any) => {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={role === 'teen' ? Colors.gradientSafe as any : ['transparent', 'transparent']}
+                colors={role === 'teen' ? ['#7C3AED', '#A855F7'] : ['transparent', 'transparent']}
                 style={styles.roleIconBg}
               >
-                <Ionicons name="car-sport" size={28} color={role === 'teen' ? '#fff' : Colors.textTertiary} />
+                <Ionicons name="bicycle" size={28} color={role === 'teen' ? '#fff' : Colors.textTertiary} />
               </LinearGradient>
-              <Text style={[styles.roleLabel, role === 'teen' && { color: Colors.safe }]}>Teen</Text>
+              <Text style={[styles.roleLabel, role === 'teen' && { color: Colors.accent }]}>Rider</Text>
               <Text style={styles.roleDesc}>Drive safely</Text>
             </TouchableOpacity>
           </View>
@@ -118,7 +130,7 @@ export const RegisterScreen = ({ navigation }: any) => {
                 onPress={handleRegister}
                 loading={loading}
                 size="lg"
-                colors={role === 'parent' ? (Colors.gradientPrimary as any) : (Colors.gradientSafe as any)}
+                colors={role === 'parent' ? ['#4F46E5', '#6C63FF'] : ['#7C3AED', '#A855F7']}
                 style={{ marginTop: Spacing.xxl }}
               />
             </View>
@@ -191,13 +203,13 @@ const styles = StyleSheet.create({
   },
   roleCardActive: {
     borderColor: Colors.primary,
-    backgroundColor: 'rgba(0, 122, 255, 0.12)',
+    backgroundColor: 'rgba(108, 99, 255, 0.12)',
     ...Shadow.glow(Colors.primary),
   },
   roleCardActiveTeen: {
-    borderColor: Colors.safe,
-    backgroundColor: 'rgba(52, 199, 89, 0.12)',
-    ...Shadow.glow(Colors.safe),
+    borderColor: Colors.accent,
+    backgroundColor: 'rgba(168, 85, 247, 0.12)',
+    ...Shadow.glow(Colors.accent),
   },
   roleIconBg: {
     width: scaleWidth(56),

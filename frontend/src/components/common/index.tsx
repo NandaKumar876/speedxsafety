@@ -2,7 +2,7 @@
 // SpeedxSafety - Reusable UI Components
 // ============================================
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
   TextInput,
   ActivityIndicator,
   ViewStyle,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import { Colors, Spacing, BorderRadius, FontSize, FontWeight, FontFamily, Shadow } from '../../constants/theme';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
 // ---- Glass Card ----
@@ -22,14 +23,48 @@ interface GlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle | any;
   onPress?: () => void;
+  animated?: boolean;
+  delay?: number;
 }
 
-export const GlassCard: React.FC<GlassCardProps> = ({ children, style, onPress }) => {
+export const GlassCard: React.FC<GlassCardProps> = ({ children, style, onPress, animated = false, delay = 0 }) => {
+  const fadeAnim = useRef(new Animated.Value(animated ? 0 : 1)).current;
+  const slideAnim = useRef(new Animated.Value(animated ? 20 : 0)).current;
+
+  useEffect(() => {
+    if (animated) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          delay,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 500,
+          delay,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [animated, delay]);
+
   const content = (
-    <BlurView intensity={65} tint="dark" style={[styles.glassCard, style]}>
+    <Animated.View
+      style={[
+        styles.glassCard,
+        style,
+        animated && {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
       {children}
-    </BlurView>
+    </Animated.View>
   );
+
   if (onPress) {
     return <TouchableOpacity onPress={onPress} activeOpacity={0.8}>{content}</TouchableOpacity>;
   }
@@ -51,27 +86,50 @@ interface GradientButtonProps {
 export const GradientButton: React.FC<GradientButtonProps> = ({
   title, onPress, colors, icon, disabled, loading, size = 'md', style,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const height = size === 'sm' ? scaleHeight(40) : size === 'lg' ? scaleHeight(56) : scaleHeight(48);
   const fontSize = size === 'sm' ? FontSize.sm : size === 'lg' ? FontSize.lg : FontSize.md;
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled || loading} activeOpacity={0.8} style={style}>
-      <LinearGradient
-        colors={colors || Colors.gradientPrimary as any}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[styles.gradientBtn, { height, opacity: disabled ? 0.5 : 1 }]}
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        activeOpacity={0.9}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <View style={styles.btnContent}>
-            {icon && <View style={{ marginRight: Spacing.sm }}>{icon}</View>}
-            <Text style={[styles.btnText, { fontSize }]}>{title}</Text>
-          </View>
-        )}
-      </LinearGradient>
-    </TouchableOpacity>
+        <LinearGradient
+          colors={colors || Colors.gradientPrimary as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.gradientBtn, { height, opacity: disabled ? 0.5 : 1 }]}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <View style={styles.btnContent}>
+              {icon && <View style={{ marginRight: Spacing.sm }}>{icon}</View>}
+              <Text style={[styles.btnText, { fontSize }]}>{title}</Text>
+            </View>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -89,7 +147,7 @@ interface GlassInputProps {
 export const GlassInput: React.FC<GlassInputProps> = ({
   placeholder, value, onChangeText, icon, secureTextEntry, keyboardType, style,
 }) => (
-  <BlurView intensity={55} tint="dark" style={[styles.glassInput, style]}>
+  <View style={[styles.glassInput, style]}>
     {icon && <View style={styles.inputIcon}>{icon}</View>}
     <TextInput
       placeholder={placeholder}
@@ -100,7 +158,7 @@ export const GlassInput: React.FC<GlassInputProps> = ({
       keyboardType={keyboardType}
       style={styles.inputText}
     />
-  </BlurView>
+  </View>
 );
 
 // ---- Status Badge ----
@@ -126,11 +184,11 @@ interface StatCardProps {
 }
 
 export const StatCard: React.FC<StatCardProps> = ({ label, value, icon, color = Colors.primary }) => (
-  <BlurView intensity={65} tint="dark" style={styles.statCard}>
+  <View style={styles.statCard}>
     {icon && <Text style={{ fontSize: scaleFont(20), marginBottom: scaleHeight(4) }}>{icon}</Text>}
     <Text style={[styles.statValue, { color }]}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
-  </BlurView>
+  </View>
 );
 
 // ---- Section Header ----
@@ -150,6 +208,43 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, action, onA
     )}
   </View>
 );
+
+// ---- Skeleton Loader ----
+interface SkeletonProps {
+  width: number | string;
+  height: number;
+  borderRadius?: number;
+  style?: ViewStyle;
+}
+
+export const Skeleton: React.FC<SkeletonProps> = ({ width, height, borderRadius = BorderRadius.md, style }) => {
+  const pulseAnim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: typeof width === 'string' ? undefined : width,
+          flex: width === '100%' ? 1 : undefined,
+          height,
+          borderRadius,
+          backgroundColor: Colors.shimmer,
+          opacity: pulseAnim,
+        },
+        style,
+      ]}
+    />
+  );
+};
 
 // ---- Styles ----
 const styles = StyleSheet.create({

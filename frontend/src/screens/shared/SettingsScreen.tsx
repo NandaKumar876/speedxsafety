@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, GradientButton } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/theme';
 import { mockTeens } from '../../data/mockData';
-import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { scaleWidth, scaleHeight } from '../../utils/responsive';
 
 export const SettingsScreen = ({ navigation }: any) => {
   const [speedLimit, setSpeedLimit] = useState(80);
@@ -69,15 +69,15 @@ export const SettingsScreen = ({ navigation }: any) => {
         <Text style={s.sectionTitle}>Safety Features</Text>
         <GlassCard>
           <SettingRow icon="moon" iconColor={Colors.primaryLight} title="Night Curfew" subtitle="Stricter limits 10PM–6AM"
-            right={<Switch value={curfew} onValueChange={setCurfew} trackColor={{false:'#20264E',true:Colors.primaryLight+'50'}} thumbColor={curfew?Colors.primaryLight:'#606A93'}/>}
+            right={<Switch value={curfew} onValueChange={setCurfew} trackColor={{false:'#1E293B',true:Colors.primaryLight+'50'}} thumbColor={curfew?Colors.primaryLight:'#64748B'}/>}
           />
           <View style={s.divider}/>
           <SettingRow icon="alert-circle" iconColor={Colors.danger} title="Crash Detection" subtitle="Auto-alert on sudden deceleration"
-            right={<Switch value={crashDetect} onValueChange={setCrashDetect} trackColor={{false:'#20264E',true:Colors.danger+'50'}} thumbColor={crashDetect?Colors.danger:'#606A93'}/>}
+            right={<Switch value={crashDetect} onValueChange={setCrashDetect} trackColor={{false:'#1E293B',true:Colors.danger+'50'}} thumbColor={crashDetect?Colors.danger:'#64748B'}/>}
           />
           <View style={s.divider}/>
           <SettingRow icon="phone-portrait" iconColor={Colors.warning} title="Phone Usage Detection" subtitle="Detect phone use while driving"
-            right={<Switch value={phoneDetect} onValueChange={setPhoneDetect} trackColor={{false:'#20264E',true:Colors.warning+'50'}} thumbColor={phoneDetect?Colors.warning:'#606A93'}/>}
+            right={<Switch value={phoneDetect} onValueChange={setPhoneDetect} trackColor={{false:'#1E293B',true:Colors.warning+'50'}} thumbColor={phoneDetect?Colors.warning:'#64748B'}/>}
           />
         </GlassCard>
 
@@ -85,16 +85,16 @@ export const SettingsScreen = ({ navigation }: any) => {
         <Text style={s.sectionTitle}>Notifications</Text>
         <GlassCard>
           <SettingRow icon="notifications" iconColor={Colors.safe} title="Push Notifications" subtitle="Speed & geofence alerts"
-            right={<Switch value={notifications} onValueChange={setNotifications} trackColor={{false:'#20264E',true:Colors.safe+'50'}} thumbColor={notifications?Colors.safe:'#606A93'}/>}
+            right={<Switch value={notifications} onValueChange={setNotifications} trackColor={{false:'#1E293B',true:Colors.safe+'50'}} thumbColor={notifications?Colors.safe:'#64748B'}/>}
           />
         </GlassCard>
 
         {/* Teens Management */}
-        <Text style={s.sectionTitle}>Linked Teens</Text>
+        <Text style={s.sectionTitle}>Linked Riders</Text>
         {mockTeens.map(teen => (
           <GlassCard key={teen.teen_id} style={s.teenRow}>
             <View style={s.teenInfo}>
-              <LinearGradient colors={['#34C759','#30D158']} style={s.teenAvatar}>
+              <LinearGradient colors={['#7C3AED','#A855F7']} style={s.teenAvatar}>
                 <Text style={s.teenInit}>{teen.name[0]}</Text>
               </LinearGradient>
               <View>
@@ -107,7 +107,7 @@ export const SettingsScreen = ({ navigation }: any) => {
         ))}
 
         {/* Sign Out */}
-        <TouchableOpacity style={s.signOut} onPress={() => navigation.replace('Login')} activeOpacity={0.7}>
+        <TouchableOpacity style={s.signOut} onPress={() => navigation.replace('RoleSelect')} activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
           <Text style={s.signOutText}>Sign Out</Text>
         </TouchableOpacity>

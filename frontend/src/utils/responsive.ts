@@ -26,6 +26,15 @@ export const scaleHeight = (size: number): number => {
 };
 
 /**
+ * Moderate scale — width-based with dampening factor.
+ * Better for font sizes and elements that shouldn't scale linearly.
+ */
+export const moderateScale = (size: number, factor: number = 0.5): number => {
+  const newSize = size + (widthScale - 1) * factor * size;
+  return Math.round(PixelRatio.roundToNearestPixel(newSize));
+};
+
+/**
  * Scales a font size based on screen width, with capped scaling on tablets to avoid oversized text.
  */
 export const scaleFont = (size: number): number => {
@@ -50,3 +59,19 @@ export const widthPercent = (percent: number): number => {
 export const heightPercent = (percent: number): number => {
   return (percent * SCREEN_HEIGHT) / 100;
 };
+
+/**
+ * Returns responsive layout helpers for the current screen size.
+ */
+export const getResponsiveInfo = () => {
+  return {
+    screenWidth: SCREEN_WIDTH,
+    screenHeight: SCREEN_HEIGHT,
+    isMobile: SCREEN_WIDTH < 480,
+    isTablet: SCREEN_WIDTH >= 480 && SCREEN_WIDTH < 1024,
+    isDesktop: SCREEN_WIDTH >= 1024,
+    columns: SCREEN_WIDTH < 480 ? 1 : SCREEN_WIDTH < 1024 ? 2 : 3,
+  };
+};
+
+export { SCREEN_WIDTH, SCREEN_HEIGHT };

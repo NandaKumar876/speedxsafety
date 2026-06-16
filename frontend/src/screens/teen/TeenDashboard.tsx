@@ -18,6 +18,11 @@ export const TeenDashboard = ({ navigation }: any) => {
   const [speed, setSpeed] = useState(0);
   const [isDriving, setIsDriving] = useState(false);
   const sosPulse = useRef(new Animated.Value(1)).current;
+  const headerFade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(headerFade, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, []);
 
   // Animate speed for demo
   useEffect(() => {
@@ -52,11 +57,11 @@ export const TeenDashboard = ({ navigation }: any) => {
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: headerFade }]}>
           <View>
             <Text style={styles.greeting}>Hey, {teen.name.split(' ')[0]} 👋</Text>
             <Text style={styles.subGreeting}>
-              {isDriving ? 'Drive safe!' : 'Ready to drive?'}
+              {isDriving ? 'Drive safe!' : 'Ready to ride?'}
             </Text>
           </View>
           <View style={styles.headerRight}>
@@ -65,7 +70,7 @@ export const TeenDashboard = ({ navigation }: any) => {
               <Text style={styles.streakText}>{teen.streak_days}</Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Speed Status Banner */}
         {isDriving && (
@@ -98,7 +103,7 @@ export const TeenDashboard = ({ navigation }: any) => {
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={isDriving ? ['#FF3B30', '#FF6961'] : ['#34C759', '#30D158']}
+            colors={isDriving ? ['#EF4444', '#F87171'] : ['#22C55E', '#10B981']}
             style={[
               styles.driveBtnGradient,
               isDriving ? Shadow.glow(Colors.danger) : Shadow.glow(Colors.safe)
@@ -129,7 +134,7 @@ export const TeenDashboard = ({ navigation }: any) => {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#FF3B30', '#FF6961']}
+                colors={['#EF4444', '#F87171']}
                 style={styles.sosBtnGradient}
               >
                 <Ionicons name="alert-circle" size={32} color="#fff" />
@@ -148,8 +153,8 @@ export const TeenDashboard = ({ navigation }: any) => {
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
-          {mockTrips.slice(0, 2).map((trip: Trip) => (
-            <GlassCard key={trip.trip_id} style={styles.tripCard}>
+          {mockTrips.slice(0, 2).map((trip: Trip, idx: number) => (
+            <GlassCard key={trip.trip_id} style={styles.tripCard} animated delay={idx * 100}>
               <View style={styles.tripRow}>
                 <View style={styles.tripInfo}>
                   <Text style={styles.tripDate}>

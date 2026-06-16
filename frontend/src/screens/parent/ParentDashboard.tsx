@@ -2,8 +2,8 @@
 // SpeedxSafety - Parent Dashboard
 // ============================================
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, StatusBadge, SectionHeader } from '../../components/common';
@@ -11,14 +11,21 @@ import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../
 import { mockTeens, mockAlerts } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 export const ParentDashboard = ({ navigation }: any) => {
   const unreadAlerts = mockAlerts.filter(a => !a.read).length;
+  const headerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(headerAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, []);
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: headerAnim }]}>
           <View>
             <Text style={styles.greeting}>Welcome back 👋</Text>
             <Text style={styles.subGreeting}>Your family's driving overview</Text>
@@ -31,71 +38,73 @@ export const ParentDashboard = ({ navigation }: any) => {
               </View>
             )}
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
-        {/* Live Map Preview */}
-        <GlassCard style={styles.mapCard}>
-          <View style={styles.mapPlaceholder}>
-            <LinearGradient
-              colors={['#070A1E', '#10173A', '#070A1E']}
-              style={styles.mapGradient}
-            >
-              {/* Map grid lines */}
-              <View style={styles.mapGrid}>
-                {[...Array(5)].map((_, i) => (
-                  <View key={`h${i}`} style={[styles.gridLineH, { top: `${20 * (i + 1)}%` }]} />
-                ))}
-                {[...Array(5)].map((_, i) => (
-                  <View key={`v${i}`} style={[styles.gridLineV, { left: `${20 * (i + 1)}%` }]} />
-                ))}
-              </View>
+        {/* Live Map Preview — now a tappable card */}
+        <TouchableOpacity activeOpacity={0.9} onPress={() => navigation.navigate('LiveTracking')}>
+          <GlassCard style={styles.mapCard} animated delay={100}>
+            <View style={styles.mapPlaceholder}>
+              <LinearGradient
+                colors={['#080C2A', '#0D1245', '#080C2A']}
+                style={styles.mapGradient}
+              >
+                {/* Map grid */}
+                <View style={styles.mapGrid}>
+                  {[...Array(5)].map((_, i) => (
+                    <View key={`h${i}`} style={[styles.gridLineH, { top: `${20 * (i + 1)}%` }]} />
+                  ))}
+                  {[...Array(5)].map((_, i) => (
+                    <View key={`v${i}`} style={[styles.gridLineV, { left: `${20 * (i + 1)}%` }]} />
+                  ))}
+                </View>
 
-              {/* Teen location pins */}
-              {mockTeens.map((teen, index) => (
-                <View 
-                  key={teen.teen_id} 
-                  style={[
-                    styles.mapPin, 
-                    { 
-                      top: `${20 + index * 35}%`, 
-                      left: `${15 + index * 40}%` 
-                    }
-                  ]}
-                >
-                  <LinearGradient
-                    colors={teen.is_driving ? ['#34C759', '#30D158'] : ['#606A93', '#8E8E93']}
-                    style={styles.pinDot}
+                {/* Teen location pins */}
+                {mockTeens.map((teen, index) => (
+                  <View 
+                    key={teen.teen_id} 
+                    style={[styles.mapPin, { top: `${20 + index * 35}%`, left: `${15 + index * 40}%` }]}
                   >
-                    <Ionicons name="car" size={12} color="#fff" />
-                  </LinearGradient>
-                  <View style={styles.pinLabel}>
-                    <Text style={styles.pinName}>{teen.name.split(' ')[0]}</Text>
-                    {teen.is_driving && (
-                      <Text style={styles.pinSpeed}>{teen.current_speed} km/h</Text>
-                    )}
+                    <LinearGradient
+                      colors={teen.is_driving ? ['#22C55E', '#10B981'] : ['#475569', '#64748B']}
+                      style={styles.pinDot}
+                    >
+                      <Ionicons name="bicycle" size={12} color="#fff" />
+                    </LinearGradient>
+                    <View style={styles.pinLabel}>
+                      <Text style={styles.pinName}>{teen.name.split(' ')[0]}</Text>
+                      {teen.is_driving && (
+                        <Text style={styles.pinSpeed}>{teen.current_speed} km/h</Text>
+                      )}
+                    </View>
+                  </View>
+                ))}
+
+                {/* Map label */}
+                <View style={styles.mapLabel}>
+                  <View style={styles.liveIndicator}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.mapLabelText}>Live Map</Text>
+                  </View>
+                  <View style={styles.tapHint}>
+                    <Text style={styles.tapHintText}>Tap to track</Text>
+                    <Ionicons name="arrow-forward" size={12} color={Colors.primaryLight} />
                   </View>
                 </View>
-              ))}
-
-              {/* Map label */}
-              <View style={styles.mapLabel}>
-                <Ionicons name="map" size={14} color={Colors.primaryLight} />
-                <Text style={styles.mapLabelText}>Live Map</Text>
-              </View>
-            </LinearGradient>
-          </View>
-        </GlassCard>
+              </LinearGradient>
+            </View>
+          </GlassCard>
+        </TouchableOpacity>
 
         {/* Teen Cards */}
-        <SectionHeader title="Your Teens" />
-        {mockTeens.map(teen => {
+        <SectionHeader title="Your Riders" />
+        {mockTeens.map((teen, idx) => {
           const isOver = (teen.current_speed || 0) > teen.speed_limit;
           return (
-            <GlassCard key={teen.teen_id} style={[styles.teenCard, teen.is_driving && isOver && { borderColor: Colors.danger + '40' }]}>
+            <GlassCard key={teen.teen_id} style={[styles.teenCard, teen.is_driving && isOver && { borderColor: Colors.danger + '40' }]} animated delay={300 + idx * 120}>
               <View style={styles.teenHeader}>
                 <View style={styles.teenLeft}>
                   <LinearGradient
-                    colors={teen.is_driving ? (isOver ? ['#FF3B30', '#FF6961'] : ['#34C759', '#30D158']) : ['#20264E', '#2F376A']}
+                    colors={teen.is_driving ? (isOver ? ['#EF4444', '#F87171'] : ['#22C55E', '#10B981']) : ['#334155', '#475569']}
                     style={styles.teenAvatar}
                   >
                     <Text style={styles.teenInitial}>{teen.name[0]}</Text>
@@ -110,13 +119,21 @@ export const ParentDashboard = ({ navigation }: any) => {
                   </View>
                 </View>
                 <View style={styles.teenRight}>
-                  {teen.is_driving && (
+                  {teen.is_driving ? (
                     <View style={styles.speedDisplay}>
                       <Text style={[styles.currentSpeed, { color: isOver ? Colors.danger : Colors.safe }]}>
                         {teen.current_speed}
                       </Text>
                       <Text style={styles.speedUnit}>km/h</Text>
                     </View>
+                  ) : (
+                    <TouchableOpacity 
+                      style={styles.trackBtn}
+                      onPress={() => navigation.navigate('LiveTracking')}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="locate-outline" size={16} color={Colors.primary} />
+                    </TouchableOpacity>
                   )}
                 </View>
               </View>
@@ -148,14 +165,33 @@ export const ParentDashboard = ({ navigation }: any) => {
                   <Text style={styles.teenStatValue}>{teen.speed_limit} km/h</Text>
                 </View>
               </View>
+
+              {/* Track button for driving teens */}
+              {teen.is_driving && (
+                <TouchableOpacity
+                  style={styles.trackLiveBtn}
+                  onPress={() => navigation.navigate('LiveTracking')}
+                  activeOpacity={0.7}
+                >
+                  <LinearGradient
+                    colors={Colors.gradientPrimary as any}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.trackLiveGradient}
+                  >
+                    <Ionicons name="navigate" size={14} color="#fff" />
+                    <Text style={styles.trackLiveText}>Track Live</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
             </GlassCard>
           );
         })}
 
         {/* Recent Alerts */}
         <SectionHeader title="Recent Alerts" action="View All" onAction={() => navigation.navigate('Alerts')} />
-        {mockAlerts.slice(0, 3).map(alert => (
-          <GlassCard key={alert.alert_id} style={[styles.alertCard, !alert.read && styles.alertCardUnread]}>
+        {mockAlerts.slice(0, 3).map((alert, idx) => (
+          <GlassCard key={alert.alert_id} style={[styles.alertCard, !alert.read && styles.alertCardUnread]} animated delay={600 + idx * 80}>
             <View style={styles.alertRow}>
               <View style={[styles.alertIcon, { backgroundColor: getAlertColor(alert.type) + '1A' }]}>
                 <Ionicons name={getAlertIcon(alert.type)} size={18} color={getAlertColor(alert.type)} />
@@ -176,7 +212,7 @@ export const ParentDashboard = ({ navigation }: any) => {
             { icon: 'speedometer', label: 'Set Limits', color: Colors.primaryLight, nav: 'Settings' },
             { icon: 'location', label: 'Geofences', color: Colors.safe, nav: 'Geofences' },
             { icon: 'bar-chart', label: 'Reports', color: Colors.warning, nav: 'Reports' },
-            { icon: 'people', label: 'Manage', color: Colors.primaryLight, nav: 'Settings' },
+            { icon: 'people', label: 'Manage', color: Colors.accent, nav: 'Settings' },
           ].map((action, idx) => (
             <TouchableOpacity key={idx} style={styles.actionBtn} onPress={() => navigation.navigate(action.nav)} activeOpacity={0.7}>
               <LinearGradient colors={[action.color + '1A', action.color + '05']} style={styles.actionIcon}>
@@ -263,8 +299,8 @@ const styles = StyleSheet.create({
   mapPlaceholder: { height: scaleHeight(200), borderRadius: BorderRadius.xl, overflow: 'hidden' },
   mapGradient: { flex: 1, padding: Spacing.lg, position: 'relative' },
   mapGrid: { ...StyleSheet.absoluteFillObject },
-  gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(0,122,255,0.05)' },
-  gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(0,122,255,0.05)' },
+  gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(108, 99, 255, 0.05)' },
+  gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(108, 99, 255, 0.05)' },
   mapPin: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 6 },
   pinDot: {
     width: scaleWidth(28),
@@ -275,7 +311,7 @@ const styles = StyleSheet.create({
     ...Shadow.sm,
   },
   pinLabel: {
-    backgroundColor: 'rgba(6, 9, 25, 0.75)',
+    backgroundColor: 'rgba(6, 8, 26, 0.75)',
     borderRadius: scaleWidth(8),
     paddingHorizontal: scaleWidth(8),
     paddingVertical: scaleHeight(3),
@@ -287,18 +323,42 @@ const styles = StyleSheet.create({
   mapLabel: {
     position: 'absolute',
     bottom: Spacing.md,
+    left: Spacing.md,
     right: Spacing.md,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(6, 9, 25, 0.7)',
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(6, 8, 26, 0.7)',
     borderRadius: scaleWidth(8),
     paddingHorizontal: scaleWidth(10),
     paddingVertical: scaleHeight(4),
     borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.1)',
   },
+  liveDot: {
+    width: scaleWidth(6),
+    height: scaleWidth(6),
+    borderRadius: scaleWidth(3),
+    backgroundColor: Colors.safe,
+  },
   mapLabelText: { color: Colors.primaryLight, fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
+  tapHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(6, 8, 26, 0.7)',
+    borderRadius: scaleWidth(8),
+    paddingHorizontal: scaleWidth(10),
+    paddingVertical: scaleHeight(4),
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  tapHintText: { color: Colors.primaryLight, fontSize: FontSize.xs, fontWeight: FontWeight.medium },
   teenCard: { marginBottom: Spacing.md },
   teenHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg },
   teenLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
@@ -315,6 +375,16 @@ const styles = StyleSheet.create({
   speedDisplay: { alignItems: 'center' },
   currentSpeed: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy },
   speedUnit: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: -2 },
+  trackBtn: {
+    width: scaleWidth(36),
+    height: scaleWidth(36),
+    borderRadius: scaleWidth(12),
+    backgroundColor: Colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
   teenStats: { flexDirection: 'row', gap: Spacing.lg },
   teenStat: { flex: 1 },
   teenStatLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginBottom: 4 },
@@ -323,6 +393,16 @@ const styles = StyleSheet.create({
   scoreBg: { flex: 1, height: scaleHeight(6), backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: scaleHeight(3), overflow: 'hidden' },
   scoreFill: { height: scaleHeight(6), borderRadius: scaleHeight(3) },
   scoreText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, minWidth: scaleWidth(24) },
+  trackLiveBtn: { marginTop: Spacing.lg },
+  trackLiveGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: scaleHeight(36),
+    borderRadius: BorderRadius.md,
+    gap: 6,
+  },
+  trackLiveText: { color: '#fff', fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   alertCard: { marginBottom: Spacing.sm },
   alertCardUnread: { borderColor: Colors.primaryLight + '30' },
   alertRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },

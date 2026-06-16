@@ -2,7 +2,7 @@
 // SpeedxSafety - Type Definitions
 // ============================================
 
-export type UserRole = 'parent' | 'teen';
+export type UserRole = 'parent' | 'teen' | 'admin';
 
 export interface User {
   uid: string;
@@ -12,6 +12,18 @@ export interface User {
   fcm_token?: string;
   avatar?: string;
   createdAt: number;
+  is_active?: boolean;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  avatar_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Teen {
@@ -29,6 +41,16 @@ export interface Teen {
   current_lng?: number;
   streak_days: number;
   last_trip_date?: number;
+}
+
+export interface TeenLocation {
+  id: string;
+  teen_id: string;
+  lat: number;
+  lng: number;
+  speed: number;
+  heading: number;
+  timestamp: number;
 }
 
 export interface Trip {
@@ -78,6 +100,7 @@ export interface LocationPoint {
   lng: number;
   speed: number;
   timestamp: number;
+  heading?: number;
 }
 
 export type SafetyGrade = 'A' | 'B' | 'C' | 'D' | 'F';
@@ -105,4 +128,14 @@ export interface WeeklyReport {
   safety_grade: SafetyGrade;
   daily_trips: number[];
   score_trend: number[];
+}
+
+// Admin-specific types
+export interface AdminStats {
+  total_users: number;
+  total_parents: number;
+  total_teens: number;
+  active_trips: number;
+  total_alerts: number;
+  avg_safety_score: number;
 }
