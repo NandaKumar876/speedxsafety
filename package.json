@@ -7,7 +7,8 @@
     "install:all": "npm install --prefix frontend && npm install --prefix backend",
     "dev:frontend": "npm run web --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "build": "npm run build --prefix frontend && node -e \"const fs = require('fs'); fs.rmSync('public', {recursive:true, force:true}); fs.cpSync('frontend/dist', 'public', {recursive:true});\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
