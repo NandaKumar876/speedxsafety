@@ -161,7 +161,8 @@ export const AdminDashboard = ({ navigation }: any) => {
             </View>
           </GlassCard>
         ))}
-      </ScrollView>
+        </ScrollView>
+      )}
     </LinearGradient>
   );
 };
