@@ -84,6 +84,26 @@ router.post('/login', (req, res) => {
 });
 
 /**
+ * GET /api/auth/me
+ * Retrieves the currently authenticated user from the session middleware (via cookies).
+ */
+router.get('/me', (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({
+      authenticated: false,
+      message: 'No active session found',
+    });
+  }
+
+  res.json({
+    authenticated: true,
+    user: req.user,
+    session: req.session,
+  });
+});
+
+
+/**
  * GET /api/auth/users
  * List all users (for development/debugging).
  */

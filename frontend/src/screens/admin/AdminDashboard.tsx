@@ -2,117 +2,148 @@
 // SpeedxSafety - Admin Dashboard
 // ============================================
 
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, SectionHeader } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { mockTeens, mockAlerts, mockTrips } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { getAllUsers, getAdminStats } from '../../services/dataService';
 
 export const AdminDashboard = ({ navigation }: any) => {
-  const stats = [
-    { label: 'Total Users', value: '24', icon: 'people', color: Colors.primary, trend: '+3' },
-    { label: 'Active Trips', value: '7', icon: 'navigate', color: Colors.safe, trend: '+2' },
-    { label: 'Total Alerts', value: `${mockAlerts.length}`, icon: 'notifications', color: Colors.danger, trend: '-1' },
-    { label: 'Avg Score', value: '86', icon: 'star', color: Colors.warning, trend: '+4' },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any[]>([]);
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
 
-  const recentUsers = [
-    { name: 'Sarah Johnson', role: 'parent', email: 'sarah@example.com', status: 'active', joined: '2 days ago' },
-    { name: 'Alex Johnson', role: 'teen', email: 'alex@example.com', status: 'active', joined: '2 days ago' },
-    { name: 'Emma Johnson', role: 'teen', email: 'emma@example.com', status: 'active', joined: '5 days ago' },
-    { name: 'Mike Davis', role: 'parent', email: 'mike@example.com', status: 'active', joined: '1 week ago' },
-  ];
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [dbStats, dbUsers] = await Promise.all([
+        getAdminStats(),
+        getAllUsers(),
+      ]);
+
+      setStats([
+        { label: 'Total Users', value: `${dbStats.total_users}`, icon: 'people', color: Colors.primary, trend: '+1' },
+        { label: 'Active Trips', value: `${dbStats.active_trips}`, icon: 'navigate', color: Colors.safe, trend: '+0' },
+        { label: 'Total Alerts', value: `${dbStats.total_alerts}`, icon: 'notifications', color: Colors.danger, trend: '+0' },
+        { label: 'Avg Score', value: `${dbStats.avg_safety_score}%`, icon: 'star', color: Colors.warning, trend: '+0' },
+      ]);
+
+      const mappedRecent = dbUsers.slice(0, 4).map(u => ({
+        name: u.name || u.email.split('@')[0],
+        role: u.role || 'teen',
+        email: u.email,
+        status: u.is_active ? 'active' : 'suspended',
+        joined: u.created_at ? getTimeAgo(new Date(u.created_at).getTime()) : 'Just now',
+      }));
+      setRecentUsers(mappedRecent);
+    } catch (error) {
+      console.error('Failed to load admin dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Admin Panel</Text>
-            <Text style={styles.subGreeting}>System overview & management</Text>
-          </View>
-          <View style={styles.adminBadge}>
-            <Ionicons name="shield" size={16} color={Colors.primary} />
-            <Text style={styles.adminBadgeText}>Admin</Text>
-          </View>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.greeting}>Admin Panel</Text>
+              <Text style={styles.subGreeting}>System overview & management</Text>
+            </View>
+            <View style={styles.adminBadge}>
+              <Ionicons name="shield" size={16} color={Colors.primary} />
+              <Text style={styles.adminBadgeText}>Admin</Text>
+            </View>
+          </View>
 
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          {stats.map((stat, idx) => (
-            <GlassCard key={idx} style={styles.statCard} animated delay={idx * 100}>
-              <View style={[styles.statIconBg, { backgroundColor: stat.color + '15' }]}>
-                <Ionicons name={stat.icon as any} size={20} color={stat.color} />
-              </View>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-              <View style={[styles.trendBadge, { backgroundColor: stat.trend.startsWith('+') ? Colors.safe + '20' : Colors.danger + '20' }]}>
-                <Ionicons
-                  name={stat.trend.startsWith('+') ? 'trending-up' : 'trending-down'}
-                  size={12}
-                  color={stat.trend.startsWith('+') ? Colors.safe : Colors.danger}
-                />
-                <Text style={[styles.trendText, { color: stat.trend.startsWith('+') ? Colors.safe : Colors.danger }]}>
-                  {stat.trend}
-                </Text>
+          {/* Stats Grid */}
+          <View style={styles.statsGrid}>
+            {stats.map((stat, idx) => (
+              <GlassCard key={idx} style={styles.statCard} animated delay={idx * 100}>
+                <View style={[styles.statIconBg, { backgroundColor: stat.color + '15' }]}>
+                  <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+                </View>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+                <View style={[styles.trendBadge, { backgroundColor: stat.trend.startsWith('+') ? Colors.safe + '20' : Colors.danger + '20' }]}>
+                  <Ionicons
+                    name={stat.trend.startsWith('+') ? 'trending-up' : 'trending-down'}
+                    size={12}
+                    color={stat.trend.startsWith('+') ? Colors.safe : Colors.danger}
+                  />
+                  <Text style={[styles.trendText, { color: stat.trend.startsWith('+') ? Colors.safe : Colors.danger }]}>
+                    {stat.trend}
+                  </Text>
+                </View>
+              </GlassCard>
+            ))}
+          </View>
+
+          {/* Activity Chart (Simple bar visualization) */}
+          <SectionHeader title="Weekly Activity" />
+          <GlassCard animated delay={400}>
+            <View style={styles.chartContainer}>
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
+                const heights = [60, 45, 80, 35, 70, 90, 55];
+                return (
+                  <View key={day} style={styles.chartBar}>
+                    <View style={styles.barContainer}>
+                      <LinearGradient
+                        colors={Colors.gradientPrimary as any}
+                        style={[styles.bar, { height: `${heights[idx]}%` }]}
+                      />
+                    </View>
+                    <Text style={styles.barLabel}>{day}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </GlassCard>
+
+          {/* Recent Users */}
+          <SectionHeader title="Recent Users" action="View All" onAction={() => navigation.navigate('Users')} />
+          {recentUsers.map((user, idx) => (
+            <GlassCard key={idx} style={styles.userCard} animated delay={500 + idx * 80}>
+              <View style={styles.userRow}>
+                <LinearGradient
+                  colors={user.role === 'parent' ? ['#4F46E5', '#6C63FF'] : ['#7C3AED', '#A855F7']}
+                  style={styles.userAvatar}
+                >
+                  <Text style={styles.userInitial}>{user.name ? user.name[0].toUpperCase() : 'U'}</Text>
+                </LinearGradient>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{user.name}</Text>
+                  <Text style={styles.userEmail}>{user.email}</Text>
+                </View>
+                <View style={styles.userMeta}>
+                  <View style={[styles.roleBadge, {
+                    backgroundColor: user.role === 'parent' ? Colors.primary + '20' : Colors.accent + '20',
+                  }]}>
+                    <Text style={[styles.roleText, {
+                      color: user.role === 'parent' ? Colors.primary : Colors.accent,
+                    }]}>{user.role}</Text>
+                  </View>
+                  <Text style={styles.userJoined}>{user.joined}</Text>
+                </View>
               </View>
             </GlassCard>
           ))}
-        </View>
-
-        {/* Activity Chart (Simple bar visualization) */}
-        <SectionHeader title="Weekly Activity" />
-        <GlassCard animated delay={400}>
-          <View style={styles.chartContainer}>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
-              const heights = [60, 45, 80, 35, 70, 90, 55];
-              return (
-                <View key={day} style={styles.chartBar}>
-                  <View style={styles.barContainer}>
-                    <LinearGradient
-                      colors={Colors.gradientPrimary as any}
-                      style={[styles.bar, { height: `${heights[idx]}%` }]}
-                    />
-                  </View>
-                  <Text style={styles.barLabel}>{day}</Text>
-                </View>
-              );
-            })}
-          </View>
-        </GlassCard>
-
-        {/* Recent Users */}
-        <SectionHeader title="Recent Users" action="View All" onAction={() => navigation.navigate('Users')} />
-        {recentUsers.map((user, idx) => (
-          <GlassCard key={idx} style={styles.userCard} animated delay={500 + idx * 80}>
-            <View style={styles.userRow}>
-              <LinearGradient
-                colors={user.role === 'parent' ? ['#4F46E5', '#6C63FF'] : ['#7C3AED', '#A855F7']}
-                style={styles.userAvatar}
-              >
-                <Text style={styles.userInitial}>{user.name[0]}</Text>
-              </LinearGradient>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userEmail}>{user.email}</Text>
-              </View>
-              <View style={styles.userMeta}>
-                <View style={[styles.roleBadge, {
-                  backgroundColor: user.role === 'parent' ? Colors.primary + '20' : Colors.accent + '20',
-                }]}>
-                  <Text style={[styles.roleText, {
-                    color: user.role === 'parent' ? Colors.primary : Colors.accent,
-                  }]}>{user.role}</Text>
-                </View>
-                <Text style={styles.userJoined}>{user.joined}</Text>
-              </View>
-            </View>
-          </GlassCard>
-        ))}
 
         {/* Recent Alerts */}
         <SectionHeader title="System Alerts" action="View All" onAction={() => navigation.navigate('AdminAlerts')} />

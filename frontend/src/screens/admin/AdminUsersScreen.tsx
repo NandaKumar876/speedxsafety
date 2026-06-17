@@ -2,34 +2,56 @@
 // SpeedxSafety - Admin Users Screen
 // ============================================
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { scaleWidth, scaleHeight } from '../../utils/responsive';
-
-const allUsers = [
-  { id: '1', name: 'Sarah Johnson', email: 'sarah@example.com', role: 'parent', status: 'active', teens: 2, joined: '2026-05-15' },
-  { id: '2', name: 'Alex Johnson', email: 'alex@example.com', role: 'teen', status: 'active', parent: 'Sarah Johnson', score: 87, joined: '2026-05-16' },
-  { id: '3', name: 'Emma Johnson', email: 'emma@example.com', role: 'teen', status: 'active', parent: 'Sarah Johnson', score: 94, joined: '2026-05-16' },
-  { id: '4', name: 'Mike Davis', email: 'mike@example.com', role: 'parent', status: 'active', teens: 1, joined: '2026-05-20' },
-  { id: '5', name: 'Jake Davis', email: 'jake@example.com', role: 'teen', status: 'suspended', parent: 'Mike Davis', score: 62, joined: '2026-05-21' },
-  { id: '6', name: 'Lisa Park', email: 'lisa@example.com', role: 'parent', status: 'active', teens: 3, joined: '2026-06-01' },
-  { id: '7', name: 'Ryan Park', email: 'ryan@example.com', role: 'teen', status: 'active', parent: 'Lisa Park', score: 91, joined: '2026-06-02' },
-  { id: '8', name: 'Sophie Park', email: 'sophie@example.com', role: 'teen', status: 'active', parent: 'Lisa Park', score: 78, joined: '2026-06-02' },
-];
+import { getAllUsers } from '../../services/dataService';
 
 type FilterType = 'all' | 'parent' | 'teen';
 
 export const AdminUsersScreen = () => {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
 
-  const filtered = allUsers
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const dbUsers = await getAllUsers();
+      
+      const mappedUsers = dbUsers.map(u => ({
+        id: u.id,
+        name: u.name || u.email.split('@')[0],
+        email: u.email,
+        role: u.role || 'teen',
+        status: u.is_active ? 'active' : 'suspended',
+        joined: u.created_at ? new Date(u.created_at).toISOString().split('T')[0] : 'Just now',
+        teens: u.role === 'parent' ? 1 : undefined,
+        parent: u.role === 'teen' ? 'Parent User' : undefined,
+        score: u.role === 'teen' ? 90 : undefined,
+      }));
+
+      setUsers(mappedUsers);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = users
     .filter(u => filter === 'all' || u.role === filter)
     .filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
@@ -63,62 +85,70 @@ export const AdminUsersScreen = () => {
               activeOpacity={0.7}
             >
               <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                {f === 'all' ? 'All' : f === 'parent' ? 'Parents' : 'Riders'} ({allUsers.filter(u => f === 'all' || u.role === f).length})
+                {f === 'all' ? 'All' : f === 'parent' ? 'Parents' : 'Riders'} ({users.filter(u => f === 'all' || u.role === f).length})
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* User List */}
-        {filtered.map(user => (
-          <GlassCard key={user.id} style={styles.userCard}>
-            <View style={styles.userRow}>
-              <LinearGradient
-                colors={user.role === 'parent' ? ['#4F46E5', '#6C63FF'] : ['#7C3AED', '#A855F7']}
-                style={styles.avatar}
-              >
-                <Text style={styles.avatarText}>{user.name.split(' ').map(n => n[0]).join('')}</Text>
-              </LinearGradient>
-              <View style={styles.userInfo}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.userName}>{user.name}</Text>
-                  {user.status === 'suspended' && (
-                    <View style={styles.suspendedBadge}>
-                      <Text style={styles.suspendedText}>Suspended</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.userEmail}>{user.email}</Text>
-                <View style={styles.metaRow}>
-                  <View style={[styles.roleBadge, { backgroundColor: user.role === 'parent' ? Colors.primary + '20' : Colors.accent + '20' }]}>
-                    <Ionicons name={user.role === 'parent' ? 'shield-checkmark' : 'bicycle'} size={10} color={user.role === 'parent' ? Colors.primary : Colors.accent} />
-                    <Text style={[styles.roleText, { color: user.role === 'parent' ? Colors.primary : Colors.accent }]}>{user.role}</Text>
-                  </View>
-                  {user.role === 'parent' && (
-                    <Text style={styles.metaText}>{(user as any).teens} teens linked</Text>
-                  )}
-                  {user.role === 'teen' && (
-                    <>
-                      <Text style={styles.metaText}>Parent: {(user as any).parent}</Text>
-                      <Text style={[styles.metaText, { color: (user as any).score >= 80 ? Colors.safe : Colors.warning }]}>
-                        Score: {(user as any).score}
-                      </Text>
-                    </>
-                  )}
-                </View>
-              </View>
-              <TouchableOpacity style={styles.moreBtn} activeOpacity={0.7}>
-                <Ionicons name="ellipsis-vertical" size={18} color={Colors.textTertiary} />
-              </TouchableOpacity>
-            </View>
-          </GlassCard>
-        ))}
-
-        {filtered.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="search" size={48} color={Colors.textTertiary} />
-            <Text style={styles.emptyText}>No users found</Text>
+        {loading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: Spacing.huge }}>
+            <ActivityIndicator size="large" color={Colors.primary} />
           </View>
+        ) : (
+          <>
+            {/* User List */}
+            {filtered.map(user => (
+              <GlassCard key={user.id} style={styles.userCard}>
+                <View style={styles.userRow}>
+                  <LinearGradient
+                    colors={user.role === 'parent' ? ['#4F46E5', '#6C63FF'] : ['#7C3AED', '#A855F7']}
+                    style={styles.avatar}
+                  >
+                    <Text style={styles.avatarText}>{user.name.split(' ').map(n => n[0]).join('')}</Text>
+                  </LinearGradient>
+                  <View style={styles.userInfo}>
+                    <View style={styles.nameRow}>
+                      <Text style={styles.userName}>{user.name}</Text>
+                      {user.status === 'suspended' && (
+                        <View style={styles.suspendedBadge}>
+                          <Text style={styles.suspendedText}>Suspended</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.userEmail}>{user.email}</Text>
+                    <View style={styles.metaRow}>
+                      <View style={[styles.roleBadge, { backgroundColor: user.role === 'parent' ? Colors.primary + '20' : Colors.accent + '20' }]}>
+                        <Ionicons name={user.role === 'parent' ? 'shield-checkmark' : 'bicycle'} size={10} color={user.role === 'parent' ? Colors.primary : Colors.accent} />
+                        <Text style={[styles.roleText, { color: user.role === 'parent' ? Colors.primary : Colors.accent }]}>{user.role}</Text>
+                      </View>
+                      {user.role === 'parent' && (
+                        <Text style={styles.metaText}>{user.teens} teen(s) linked</Text>
+                      )}
+                      {user.role === 'teen' && (
+                        <>
+                          <Text style={styles.metaText}>Parent: {user.parent}</Text>
+                          <Text style={[styles.metaText, { color: user.score >= 80 ? Colors.safe : Colors.warning }]}>
+                            Score: {user.score}
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  </View>
+                  <TouchableOpacity style={styles.moreBtn} activeOpacity={0.7}>
+                    <Ionicons name="ellipsis-vertical" size={18} color={Colors.textTertiary} />
+                  </TouchableOpacity>
+                </View>
+              </GlassCard>
+            ))}
+
+            {filtered.length === 0 && (
+              <View style={styles.emptyState}>
+                <Ionicons name="search" size={48} color={Colors.textTertiary} />
+                <Text style={styles.emptyText}>No users found</Text>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </LinearGradient>

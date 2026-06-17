@@ -62,6 +62,33 @@ export const signOut = async () => {
 };
 
 /**
+ * Simulated Google Sign-In helper that registers the user if they don't exist,
+ * and signs them in if they do, using a standard dummy password behind the scenes.
+ */
+export const signInWithGoogleSimulated = async (email: string, name: string, role: UserRole) => {
+  const dummyPassword = 'GoogleUserDummyPassword123!';
+  try {
+    // Attempt login
+    const data = await signIn(email.toLowerCase(), dummyPassword);
+    return data;
+  } catch (error: any) {
+    // If not found or invalid credentials (meaning user hasn't registered yet), register them
+    const errMessage = error.message || '';
+    if (
+      errMessage.includes('Invalid login credentials') ||
+      errMessage.includes('Email not confirmed') ||
+      error.status === 400 ||
+      error.status === 401
+    ) {
+      const signUpData = await signUp(email.toLowerCase(), dummyPassword, role, name);
+      return signUpData;
+    }
+    throw error;
+  }
+};
+
+
+/**
  * Send password reset email
  */
 export const resetPassword = async (email: string) => {

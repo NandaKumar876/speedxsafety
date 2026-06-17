@@ -3,15 +3,23 @@
 // ============================================
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, Animated, ActivityIndicator, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { scaleWidth, scaleHeight } from '../../utils/responsive';
+import { GlassInput, GlassCard } from '../../components/common';
+import { signInWithGoogleSimulated } from '../../services/authService';
 
 export const TeenLoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const { height } = useWindowDimensions();
+
+  // Google Login States
+  const [googleModalVisible, setGoogleModalVisible] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const [googleError, setGoogleError] = useState('');
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -32,13 +40,38 @@ export const TeenLoginScreen = ({ navigation }: any) => {
     ).start();
   }, []);
 
-  const handleGoogleLogin = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigation.replace('TeenTabs');
-    }, 1500);
+  const handleGoogleLoginPress = () => {
+    setGoogleEmail('');
+    setGoogleName('');
+    setGoogleError('');
+    setGoogleModalVisible(true);
   };
+
+  const submitGoogleLogin = async () => {
+    setGoogleError('');
+    if (!googleEmail.trim() || !googleName.trim()) {
+      setGoogleError('Both Google Email and Full Name are required');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(googleEmail.trim())) {
+      setGoogleError('Please enter a valid Google email address');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signInWithGoogleSimulated(googleEmail.trim(), googleName.trim(), 'teen');
+      setLoading(false);
+      setGoogleModalVisible(false);
+      navigation.replace('TeenTabs');
+    } catch (err: any) {
+      setLoading(false);
+      setGoogleError(err.message || 'Google Sign-In failed. Please try again.');
+    }
+  };
+
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
@@ -87,18 +120,12 @@ export const TeenLoginScreen = ({ navigation }: any) => {
               
               <TouchableOpacity 
                 style={[styles.googleBtn, Shadow.glow('rgba(255,255,255,0.08)')]} 
-                onPress={handleGoogleLogin}
+                onPress={handleGoogleLoginPress}
                 activeOpacity={0.8}
                 disabled={loading}
               >
-                {loading ? (
-                  <ActivityIndicator color="#080C2A" size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="logo-google" size={20} color="#EA4335" style={styles.googleIcon} />
-                    <Text style={styles.googleBtnText}>Sign in with Google</Text>
-                  </>
-                )}
+                <Ionicons name="logo-google" size={20} color="#EA4335" style={styles.googleIcon} />
+                <Text style={styles.googleBtnText}>Sign in with Google</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -112,6 +139,70 @@ export const TeenLoginScreen = ({ navigation }: any) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Google Login Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={googleModalVisible}
+        onRequestClose={() => setGoogleModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <GlassCard style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Ionicons name="logo-google" size={28} color="#EA4335" />
+              <Text style={styles.modalTitle}>Google Sign In</Text>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Please authenticate using your Google Email (Main ID) and Full Name.
+            </Text>
+
+            <GlassInput
+              placeholder="Google Email Address"
+              value={googleEmail}
+              onChangeText={setGoogleEmail}
+              keyboardType="email-address"
+              icon={<Ionicons name="mail-outline" size={20} color={Colors.textTertiary} />}
+            />
+            <View style={{ height: Spacing.md }} />
+            <GlassInput
+              placeholder="Full Name"
+              value={googleName}
+              onChangeText={setGoogleName}
+              icon={<Ionicons name="person-outline" size={20} color={Colors.textTertiary} />}
+            />
+
+            {googleError ? (
+              <Text style={styles.modalError}>{googleError}</Text>
+            ) : null}
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity 
+                style={[styles.modalBtn, styles.modalBtnCancel]} 
+                onPress={() => {
+                  setGoogleModalVisible(false);
+                  setGoogleError('');
+                }}
+                disabled={loading}
+              >
+                <Text style={styles.modalBtnCancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.modalBtn, styles.modalBtnConfirm]} 
+                onPress={submitGoogleLogin}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.modalBtnConfirmText}>Continue</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </GlassCard>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 };
@@ -238,4 +329,76 @@ const styles = StyleSheet.create({
   },
   footerText: { color: Colors.textTertiary, fontSize: FontSize.md },
   footerLink: { color: Colors.accentLight, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    padding: Spacing.xxl,
+    borderRadius: BorderRadius.xxl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  modalTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+  modalSubtitle: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
+  },
+  modalError: {
+    color: '#EF4444',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+    marginTop: Spacing.md,
+    textAlign: 'center',
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+  },
+  modalBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBtnCancel: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalBtnCancelText: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+  },
+  modalBtnConfirm: {
+    backgroundColor: Colors.accent,
+  },
+  modalBtnConfirmText: {
+    color: '#fff',
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
 });
+
