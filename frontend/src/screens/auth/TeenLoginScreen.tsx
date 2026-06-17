@@ -3,16 +3,13 @@
 // ============================================
 
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions, Animated, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassInput, GradientButton } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { scaleWidth, scaleHeight } from '../../utils/responsive';
 
 export const TeenLoginScreen = ({ navigation }: any) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { height } = useWindowDimensions();
 
@@ -35,7 +32,7 @@ export const TeenLoginScreen = ({ navigation }: any) => {
     ).start();
   }, []);
 
-  const handleLogin = () => {
+  const handleGoogleLogin = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -83,41 +80,34 @@ export const TeenLoginScreen = ({ navigation }: any) => {
 
           {/* Form */}
           <Animated.View style={[styles.formSection, { opacity: fadeAnim }]}>
-            <GlassInput
-              placeholder="Email address"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              icon={<Ionicons name="mail-outline" size={20} color={Colors.textTertiary} />}
-            />
-            <View style={{ height: Spacing.md }} />
-            <GlassInput
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              icon={<Ionicons name="lock-closed-outline" size={20} color={Colors.textTertiary} />}
-            />
-
-            <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.7}>
-              <Text style={styles.forgotText}>Forgot password?</Text>
-            </TouchableOpacity>
-
-            <GradientButton
-              title="Start Riding"
-              onPress={handleLogin}
-              loading={loading}
-              size="lg"
-              colors={['#7C3AED', '#A855F7']}
-              style={{ marginTop: Spacing.lg }}
-            />
+            <View style={styles.googleContainer}>
+              <Text style={styles.googlePrompt}>
+                Please sign in with your Google account to start tracking your safety score and building streaks.
+              </Text>
+              
+              <TouchableOpacity 
+                style={[styles.googleBtn, Shadow.glow('rgba(255,255,255,0.08)')]} 
+                onPress={handleGoogleLogin}
+                activeOpacity={0.8}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#080C2A" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="logo-google" size={20} color="#EA4335" style={styles.googleIcon} />
+                    <Text style={styles.googleBtnText}>Sign in with Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </Animated.View>
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account?</Text>
+            <Text style={styles.footerText}>Need to set up a new account?</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')} activeOpacity={0.7}>
-              <Text style={styles.footerLink}> Sign Up</Text>
+              <Text style={styles.footerLink}> Register here</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -206,14 +196,40 @@ const styles = StyleSheet.create({
   formSection: {
     marginBottom: Spacing.xxxl,
   },
-  forgotBtn: {
-    alignSelf: 'flex-end',
+  googleContainer: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.xl,
     marginTop: Spacing.md,
   },
-  forgotText: {
-    color: Colors.accentLight,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+  googlePrompt: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: Spacing.xl,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    width: '100%',
+    height: 52,
+  },
+  googleIcon: {
+    marginRight: Spacing.sm,
+  },
+  googleBtnText: {
+    color: '#080C2A',
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
   },
   footer: {
     flexDirection: 'row',
