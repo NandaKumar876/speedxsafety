@@ -4,6 +4,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 
 // Load environment variables
@@ -12,6 +13,7 @@ dotenv.config();
 // Middleware
 const { requestLogger, notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const { apiLimiter, authLimiter, telemetryLimiter, alertLimiter } = require('./middleware/rateLimiter');
+const { supabaseSessionMiddleware } = require('./middleware/supabaseSession');
 
 // Route modules
 const authRoutes = require('./routes/auth');
@@ -35,8 +37,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: corsOrigins !== '*',
 }));
+app.use(cookieParser());
 app.use(express.json({ limit: '10kb' }));   // Guard against oversized payloads
 app.use(requestLogger);
+app.use(supabaseSessionMiddleware);
 
 // ── Health Check ─────────────────────────────
 app.get('/', (_req, res) => {
