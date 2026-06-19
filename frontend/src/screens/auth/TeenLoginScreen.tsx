@@ -1,5 +1,6 @@
 // ============================================
-// SpeedxSafety - Teen/Rider Login Screen
+// SpeedxSafety - Teen/Rider Login (Spatial Edition)
+// Floating glass forms, ambient glow, spatial modal
 // ============================================
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -7,8 +8,10 @@ import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platfor
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { scaleWidth, scaleHeight } from '../../utils/responsive';
+import { Springs, Duration } from '../../constants/spatial';
+import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 import { GlassInput, GlassCard } from '../../components/common';
+import { FloatingOrbs } from '../../components/common/SpatialComponents';
 import { signInWithGoogleSimulated } from '../../services/authService';
 
 export const TeenLoginScreen = ({ navigation }: any) => {
@@ -24,21 +27,50 @@ export const TeenLoginScreen = ({ navigation }: any) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const badgePulse = useRef(new Animated.Value(1)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const modalScale = useRef(new Animated.Value(0.9)).current;
+  const modalOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, ...Springs.gentle }),
     ]).start();
+
+    // Floating icon animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
+      ])
+    ).start();
 
     // Pulsing badge animation
     Animated.loop(
       Animated.sequence([
-        Animated.timing(badgePulse, { toValue: 1.08, duration: 1200, useNativeDriver: true }),
+        Animated.timing(badgePulse, { toValue: 1.06, duration: 1200, useNativeDriver: true }),
         Animated.timing(badgePulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
       ])
     ).start();
   }, []);
+
+  // Modal animation
+  useEffect(() => {
+    if (googleModalVisible) {
+      Animated.parallel([
+        Animated.spring(modalScale, { toValue: 1, ...Springs.gentle }),
+        Animated.timing(modalOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+      ]).start();
+    } else {
+      modalScale.setValue(0.9);
+      modalOpacity.setValue(0);
+    }
+  }, [googleModalVisible]);
+
+  const floatTranslate = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -6],
+  });
 
   const handleGoogleLoginPress = () => {
     setGoogleEmail('');
@@ -75,19 +107,26 @@ export const TeenLoginScreen = ({ navigation }: any) => {
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
+      <FloatingOrbs orbs={[
+        { color: 'rgba(168, 85, 247, 0.07)', size: 180, x: -40, y: 80 },
+        { color: 'rgba(108, 99, 255, 0.05)', size: 150, x: 250, y: 300 },
+      ]} />
+
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { minHeight: height }]} keyboardShouldPersistTaps="handled">
           {/* Back Button */}
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+            <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
 
           {/* Header */}
           <Animated.View style={[styles.headerSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <Animated.View style={{ transform: [{ scale: badgePulse }] }}>
-              <LinearGradient colors={['#7C3AED', '#A855F7']} style={styles.iconBg}>
-                <Ionicons name="bicycle" size={scaleWidth(36)} color="#fff" />
-              </LinearGradient>
+            <Animated.View style={{ transform: [{ scale: badgePulse }, { translateY: floatTranslate }] }}>
+              <View style={styles.iconOuter}>
+                <LinearGradient colors={['#7C3AED', '#A855F7', '#C084FC']} style={styles.iconBg}>
+                  <Ionicons name="bicycle" size={scaleWidth(32)} color="#fff" />
+                </LinearGradient>
+              </View>
             </Animated.View>
             <Text style={styles.title}>Rider Login</Text>
             <Text style={styles.subtitle}>Start your safe ride 🏍️</Text>
@@ -95,39 +134,40 @@ export const TeenLoginScreen = ({ navigation }: any) => {
 
           {/* Stats teaser */}
           <Animated.View style={[styles.statsTeaser, { opacity: fadeAnim }]}>
-            <View style={styles.statItem}>
-              <Text style={styles.statIcon}>🏆</Text>
-              <Text style={styles.statText}>Earn Badges</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statIcon}>🔥</Text>
-              <Text style={styles.statText}>Build Streaks</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statIcon}>⭐</Text>
-              <Text style={styles.statText}>Score Points</Text>
-            </View>
+            {[
+              { icon: '🏆', text: 'Earn Badges' },
+              { icon: '🔥', text: 'Build Streaks' },
+              { icon: '⭐', text: 'Score Points' },
+            ].map((stat, idx) => (
+              <React.Fragment key={stat.text}>
+                {idx > 0 && <View style={styles.statDivider} />}
+                <View style={styles.statItem}>
+                  <Text style={styles.statIcon}>{stat.icon}</Text>
+                  <Text style={styles.statText}>{stat.text}</Text>
+                </View>
+              </React.Fragment>
+            ))}
           </Animated.View>
 
           {/* Form */}
           <Animated.View style={[styles.formSection, { opacity: fadeAnim }]}>
-            <View style={styles.googleContainer}>
+            <GlassCard elevation="floating" style={styles.googleContainer}>
               <Text style={styles.googlePrompt}>
-                Please sign in with your Google account to start tracking your safety score and building streaks.
+                Sign in with your Google account to start tracking your safety score and building streaks.
               </Text>
-              
-              <TouchableOpacity 
-                style={[styles.googleBtn, Shadow.glow('rgba(255,255,255,0.08)')]} 
+
+              <TouchableOpacity
+                style={styles.googleBtn}
                 onPress={handleGoogleLoginPress}
                 activeOpacity={0.8}
                 disabled={loading}
               >
-                <Ionicons name="logo-google" size={20} color="#EA4335" style={styles.googleIcon} />
-                <Text style={styles.googleBtnText}>Sign in with Google</Text>
+                <View style={styles.googleBtnInner}>
+                  <Ionicons name="logo-google" size={20} color="#EA4335" style={styles.googleIcon} />
+                  <Text style={styles.googleBtnText}>Sign in with Google</Text>
+                </View>
               </TouchableOpacity>
-            </View>
+            </GlassCard>
           </Animated.View>
 
           {/* Footer */}
@@ -140,21 +180,29 @@ export const TeenLoginScreen = ({ navigation }: any) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Google Login Modal */}
+      {/* Google Login Modal — Spatial */}
       <Modal
-        animationType="fade"
+        animationType="none"
         transparent={true}
         visible={googleModalVisible}
         onRequestClose={() => setGoogleModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <GlassCard style={styles.modalContent}>
+        <Animated.View style={[styles.modalOverlay, { opacity: modalOpacity }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            onPress={() => { setGoogleModalVisible(false); setGoogleError(''); }}
+            activeOpacity={1}
+          />
+          <Animated.View style={[styles.modalCard, { transform: [{ scale: modalScale }] }, Shadow.xl]}>
+            <View style={styles.modalHighlight} />
             <View style={styles.modalHeader}>
-              <Ionicons name="logo-google" size={28} color="#EA4335" />
+              <View style={styles.modalGoogleIcon}>
+                <Ionicons name="logo-google" size={22} color="#EA4335" />
+              </View>
               <Text style={styles.modalTitle}>Google Sign In</Text>
             </View>
             <Text style={styles.modalSubtitle}>
-              Please authenticate using your Google Email (Main ID) and Full Name.
+              Authenticate with your Google Email and Full Name.
             </Text>
 
             <GlassInput
@@ -162,14 +210,14 @@ export const TeenLoginScreen = ({ navigation }: any) => {
               value={googleEmail}
               onChangeText={setGoogleEmail}
               keyboardType="email-address"
-              icon={<Ionicons name="mail-outline" size={20} color={Colors.textTertiary} />}
+              icon={<Ionicons name="mail-outline" size={18} color={Colors.textTertiary} />}
             />
             <View style={{ height: Spacing.md }} />
             <GlassInput
               placeholder="Full Name"
               value={googleName}
               onChangeText={setGoogleName}
-              icon={<Ionicons name="person-outline" size={20} color={Colors.textTertiary} />}
+              icon={<Ionicons name="person-outline" size={18} color={Colors.textTertiary} />}
             />
 
             {googleError ? (
@@ -177,8 +225,8 @@ export const TeenLoginScreen = ({ navigation }: any) => {
             ) : null}
 
             <View style={styles.modalBtnRow}>
-              <TouchableOpacity 
-                style={[styles.modalBtn, styles.modalBtnCancel]} 
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalBtnCancel]}
                 onPress={() => {
                   setGoogleModalVisible(false);
                   setGoogleError('');
@@ -188,20 +236,27 @@ export const TeenLoginScreen = ({ navigation }: any) => {
                 <Text style={styles.modalBtnCancelText}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[styles.modalBtn, styles.modalBtnConfirm]} 
+              <TouchableOpacity
+                style={[styles.modalBtn]}
                 onPress={submitGoogleLogin}
                 disabled={loading}
               >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.modalBtnConfirmText}>Continue</Text>
-                )}
+                <LinearGradient
+                  colors={Colors.gradientAccent as any}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalBtnConfirm}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.modalBtnConfirmText}>Continue</Text>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
             </View>
-          </GlassCard>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
     </LinearGradient>
   );
@@ -217,7 +272,7 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     position: 'absolute',
-    top: scaleHeight(50),
+    top: getSafeAreaTop() + 8,
     left: 0,
     width: scaleWidth(42),
     height: scaleWidth(42),
@@ -228,19 +283,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     zIndex: 10,
+    ...Shadow.sm,
   },
   headerSection: {
     alignItems: 'center',
     marginBottom: Spacing.xxl,
   },
+  iconOuter: {
+    padding: 3,
+    borderRadius: scaleWidth(28),
+    backgroundColor: 'rgba(168, 85, 247, 0.12)',
+    marginBottom: Spacing.lg,
+  },
   iconBg: {
-    width: scaleWidth(80),
-    height: scaleWidth(80),
+    width: scaleWidth(74),
+    height: scaleWidth(74),
     borderRadius: scaleWidth(24),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
-    ...Shadow.glow('#A855F7'),
+    ...Shadow.glowIntense('#A855F7'),
   },
   title: {
     fontSize: FontSize.xxxl,
@@ -265,6 +326,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.xxl,
+    ...Shadow.sm,
   },
   statItem: {
     flex: 1,
@@ -272,7 +334,7 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   statIcon: {
-    fontSize: scaleWidth(20),
+    fontSize: scaleWidth(18),
   },
   statText: {
     fontSize: FontSize.xs,
@@ -289,12 +351,7 @@ const styles = StyleSheet.create({
   },
   googleContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: Spacing.xl,
-    marginTop: Spacing.md,
   },
   googlePrompt: {
     fontSize: FontSize.md,
@@ -304,6 +361,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   googleBtn: {
+    width: '100%',
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Shadow.sm,
+  },
+  googleBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -311,14 +374,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
-    width: '100%',
     height: 52,
   },
   googleIcon: {
     marginRight: Spacing.sm,
   },
   googleBtnText: {
-    color: '#080C2A',
+    color: '#1a1a2e',
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },
@@ -329,28 +391,47 @@ const styles = StyleSheet.create({
   },
   footerText: { color: Colors.textTertiary, fontSize: FontSize.md },
   footerLink: { color: Colors.accentLight, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
-  
-  // Modal Styles
+
+  // Modal — Spatial
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.xl,
   },
-  modalContent: {
+  modalCard: {
     width: '100%',
     maxWidth: 400,
-    padding: Spacing.xxl,
+    backgroundColor: Colors.bgSurface,
     borderRadius: BorderRadius.xxl,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: Colors.borderMedium,
+    padding: Spacing.xxl,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  modalHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.md,
     marginBottom: Spacing.md,
+  },
+  modalGoogleIcon: {
+    width: scaleWidth(40),
+    height: scaleWidth(40),
+    borderRadius: scaleWidth(12),
+    backgroundColor: 'rgba(234, 67, 53, 0.10)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: FontSize.xl,
@@ -364,7 +445,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   modalError: {
-    color: '#EF4444',
+    color: Colors.danger,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.md,
@@ -377,15 +458,16 @@ const styles = StyleSheet.create({
   },
   modalBtn: {
     flex: 1,
-    height: 46,
     borderRadius: BorderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
+    overflow: 'hidden',
   },
   modalBtnCancel: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: Colors.bgCard,
     borderWidth: 1,
     borderColor: Colors.border,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBtnCancelText: {
     color: Colors.textSecondary,
@@ -393,7 +475,10 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
   },
   modalBtnConfirm: {
-    backgroundColor: Colors.accent,
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBtnConfirmText: {
     color: '#fff',
@@ -401,4 +486,3 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
 });
-

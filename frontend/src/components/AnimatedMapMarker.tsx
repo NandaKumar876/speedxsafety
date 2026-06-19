@@ -5,7 +5,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontSize, FontWeight, Shadow } from '../constants/theme';
+import { Colors, FontSize, FontWeight, Shadow, BorderRadius } from '../constants/theme';
 import { scaleWidth, scaleHeight } from '../utils/responsive';
 
 interface AnimatedMapMarkerProps {
@@ -22,21 +22,36 @@ export const AnimatedMapMarker: React.FC<AnimatedMapMarkerProps> = ({
 }) => {
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const pulseOpacity = useRef(new Animated.Value(0.6)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (isActive) {
+      // Loop pulse animation
       Animated.loop(
         Animated.parallel([
           Animated.sequence([
-            Animated.timing(pulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+            Animated.timing(pulseAnim, { toValue: 1, duration: 1800, useNativeDriver: true }),
             Animated.timing(pulseAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
           ]),
           Animated.sequence([
-            Animated.timing(pulseOpacity, { toValue: 0, duration: 1500, useNativeDriver: true }),
+            Animated.timing(pulseOpacity, { toValue: 0, duration: 1800, useNativeDriver: true }),
             Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true }),
           ]),
         ])
       ).start();
+
+      // Loop gentle floating animation for the entire marker label/badge to feel spatial
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnim, { toValue: -3, duration: 1200, useNativeDriver: true }),
+          Animated.timing(floatAnim, { toValue: 3, duration: 1200, useNativeDriver: true }),
+          Animated.timing(floatAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(0);
+      pulseOpacity.setValue(0);
+      floatAnim.setValue(0);
     }
   }, [isActive]);
 
@@ -47,19 +62,19 @@ export const AnimatedMapMarker: React.FC<AnimatedMapMarkerProps> = ({
 
   const pulseScale = pulseAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 2.5],
+    outputRange: [1, 2.8],
   });
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { transform: [{ translateY: floatAnim }] }]}>
       {/* Radar pulse ring */}
       {isActive && (
         <Animated.View
           style={[
             styles.pulse,
             {
-              backgroundColor: statusColor + '30',
-              borderColor: statusColor + '50',
+              backgroundColor: statusColor + '15',
+              borderColor: statusColor + '40',
               transform: [{ scale: pulseScale }],
               opacity: pulseOpacity,
             },
@@ -67,8 +82,8 @@ export const AnimatedMapMarker: React.FC<AnimatedMapMarkerProps> = ({
         />
       )}
 
-      {/* Main marker */}
-      <View style={[styles.marker, { backgroundColor: statusColor }, Shadow.glow(statusColor)]}>
+      {/* Main marker bubble */}
+      <View style={[styles.marker, { backgroundColor: statusColor, borderColor: '#fff' }, Shadow.glow(statusColor)]}>
         <View style={{ transform: [{ rotate: `${heading}deg` }] }}>
           <Ionicons name={iconName} size={18} color="#fff" />
         </View>
@@ -76,19 +91,19 @@ export const AnimatedMapMarker: React.FC<AnimatedMapMarkerProps> = ({
 
       {/* Speed badge */}
       {isActive && (
-        <View style={[styles.speedBadge, { backgroundColor: statusColor + '20', borderColor: statusColor + '40' }]}>
+        <View style={[styles.speedBadge, { borderColor: statusColor + '50' }, Shadow.glowSoft(statusColor)]}>
           <Text style={[styles.speedText, { color: statusColor }]}>{Math.round(speed)}</Text>
           <Text style={styles.speedUnit}>km/h</Text>
         </View>
       )}
 
-      {/* Name label */}
+      {/* Name label (frosted glass) */}
       {name && (
         <View style={styles.nameLabel}>
           <Text style={styles.nameText}>{name}</Text>
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -99,51 +114,51 @@ const styles = StyleSheet.create({
   },
   pulse: {
     position: 'absolute',
-    width: scaleWidth(36),
-    height: scaleWidth(36),
-    borderRadius: scaleWidth(18),
+    width: scaleWidth(38),
+    height: scaleWidth(38),
+    borderRadius: scaleWidth(19),
     borderWidth: 1.5,
   },
   marker: {
-    width: scaleWidth(36),
-    height: scaleWidth(36),
-    borderRadius: scaleWidth(18),
+    width: scaleWidth(38),
+    height: scaleWidth(38),
+    borderRadius: scaleWidth(19),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
   },
   speedBadge: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 2,
-    borderRadius: scaleWidth(8),
-    paddingHorizontal: scaleWidth(6),
+    borderRadius: BorderRadius.xs,
+    paddingHorizontal: scaleWidth(8),
     paddingVertical: scaleHeight(2),
-    marginTop: scaleHeight(4),
-    borderWidth: 1,
+    marginTop: scaleHeight(5),
+    borderWidth: 1.2,
+    backgroundColor: 'rgba(5, 7, 20, 0.85)',
   },
   speedText: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.heavy,
   },
   speedUnit: {
-    fontSize: 8,
+    fontSize: 7,
     color: Colors.textTertiary,
     fontWeight: FontWeight.medium,
   },
   nameLabel: {
-    backgroundColor: 'rgba(6, 8, 26, 0.85)',
-    borderRadius: scaleWidth(6),
+    backgroundColor: 'rgba(10, 14, 42, 0.85)',
+    borderRadius: BorderRadius.xs,
     paddingHorizontal: scaleWidth(8),
     paddingVertical: scaleHeight(2),
-    marginTop: scaleHeight(2),
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
+    marginTop: scaleHeight(4),
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   nameText: {
-    color: '#fff',
-    fontSize: 10,
+    color: Colors.textPrimary,
+    fontSize: 9,
     fontWeight: FontWeight.semibold,
   },
 });

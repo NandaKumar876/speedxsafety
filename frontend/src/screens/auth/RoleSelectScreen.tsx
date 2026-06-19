@@ -1,5 +1,6 @@
 // ============================================
-// SpeedxSafety - Role Selection Landing Screen
+// SpeedxSafety - Role Selection (Spatial Edition)
+// Immersive hero, floating cards, ambient orbs
 // ============================================
 
 import React, { useEffect, useRef } from 'react';
@@ -7,75 +8,99 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated, useWindowDimensions
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { scaleWidth, scaleHeight } from '../../utils/responsive';
+import { Springs, Duration, Stagger } from '../../constants/spatial';
+import { FloatingOrbs } from '../../components/common/SpatialComponents';
+import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 
 export const RoleSelectScreen = ({ navigation }: any) => {
-  const logoScale = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.6)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
   const titleSlide = useRef(new Animated.Value(30)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
-  const cardSlide1 = useRef(new Animated.Value(50)).current;
+  const cardSlide1 = useRef(new Animated.Value(60)).current;
   const cardOpacity1 = useRef(new Animated.Value(0)).current;
-  const cardSlide2 = useRef(new Animated.Value(50)).current;
+  const cardSlide2 = useRef(new Animated.Value(60)).current;
   const cardOpacity2 = useRef(new Animated.Value(0)).current;
   const adminOpacity = useRef(new Animated.Value(0)).current;
   const { height } = useWindowDimensions();
 
+  // Staggered entrance sequence
   useEffect(() => {
     Animated.sequence([
-      // Logo entrance
+      // Logo entrance with spring
       Animated.parallel([
-        Animated.spring(logoScale, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }),
-        Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.spring(logoScale, { toValue: 1, ...Springs.bouncy }),
+        Animated.timing(logoOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
       ]),
-      // Title
+      // Title slide up
       Animated.parallel([
-        Animated.timing(titleSlide, { toValue: 0, duration: 400, useNativeDriver: true }),
-        Animated.timing(titleOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.spring(titleSlide, { toValue: 0, ...Springs.gentle }),
+        Animated.timing(titleOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
       ]),
-      // Cards staggered
+      // Cards staggered entrance
       Animated.parallel([
-        Animated.timing(cardSlide1, { toValue: 0, duration: 500, useNativeDriver: true }),
-        Animated.timing(cardOpacity1, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(cardSlide1, { toValue: 0, ...Springs.gentle }),
+        Animated.timing(cardOpacity1, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(cardSlide2, { toValue: 0, duration: 500, useNativeDriver: true }),
-        Animated.timing(cardOpacity2, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.timing(adminOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(cardSlide2, { toValue: 0, ...Springs.gentle }),
+        Animated.timing(cardOpacity2, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+        Animated.timing(adminOpacity, { toValue: 1, duration: Duration.slow, useNativeDriver: true }),
       ]),
     ]).start();
   }, []);
+
+  // Continuous floating animation for logo
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, { toValue: 1, duration: 2500, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 0, duration: 2500, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  const floatTranslate = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -8],
+  });
 
   const RoleCard = ({
     title, subtitle, icon, gradient, onPress, animSlide, animOpacity, glowColor,
   }: any) => {
     const pressScale = useRef(new Animated.Value(1)).current;
-    
+
     return (
-      <Animated.View style={{ opacity: animOpacity, transform: [{ translateY: animSlide }, { scale: pressScale }] }}>
+      <Animated.View style={{ opacity: animOpacity, transform: [{ translateY: animSlide }] }}>
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={onPress}
-          onPressIn={() => Animated.spring(pressScale, { toValue: 0.96, useNativeDriver: true }).start()}
-          onPressOut={() => Animated.spring(pressScale, { toValue: 1, useNativeDriver: true }).start()}
+          onPressIn={() => Animated.spring(pressScale, { toValue: 0.95, ...Springs.snappy }).start()}
+          onPressOut={() => Animated.spring(pressScale, { toValue: 1, ...Springs.bouncy }).start()}
         >
-          <LinearGradient
-            colors={gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.roleCard, Shadow.glow(glowColor)]}
-          >
-            <View style={styles.roleCardContent}>
-              <View style={styles.roleIconContainer}>
-                <Ionicons name={icon} size={scaleWidth(36)} color="#fff" />
+          <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+            <LinearGradient
+              colors={gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.roleCard, Shadow.glowSoft(glowColor)]}
+            >
+              {/* Glass highlight at top */}
+              <View style={styles.cardHighlight} />
+
+              <View style={styles.roleCardContent}>
+                <View style={styles.roleIconContainer}>
+                  <Ionicons name={icon} size={scaleWidth(32)} color="#fff" />
+                </View>
+                <Text style={styles.roleTitle}>{title}</Text>
+                <Text style={styles.roleSubtitle}>{subtitle}</Text>
               </View>
-              <Text style={styles.roleTitle}>{title}</Text>
-              <Text style={styles.roleSubtitle}>{subtitle}</Text>
-            </View>
-            <View style={styles.roleArrow}>
-              <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.7)" />
-            </View>
-          </LinearGradient>
+              <View style={styles.roleArrow}>
+                <Ionicons name="arrow-forward" size={18} color="rgba(255,255,255,0.8)" />
+              </View>
+            </LinearGradient>
+          </Animated.View>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -83,12 +108,23 @@ export const RoleSelectScreen = ({ navigation }: any) => {
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
+      {/* Floating ambient orbs */}
+      <FloatingOrbs />
+
       <View style={[styles.content, { minHeight: height }]}>
-        {/* Logo */}
-        <Animated.View style={[styles.logoSection, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
-          <LinearGradient colors={Colors.gradientPrimary as any} style={styles.logoGradient}>
-            <Ionicons name="speedometer" size={scaleWidth(44)} color="#fff" />
-          </LinearGradient>
+        {/* Logo with float animation */}
+        <Animated.View style={[
+          styles.logoSection,
+          {
+            opacity: logoOpacity,
+            transform: [{ scale: logoScale }, { translateY: floatTranslate }],
+          },
+        ]}>
+          <View style={styles.logoOuter}>
+            <LinearGradient colors={Colors.gradientPrimary as any} style={styles.logoGradient}>
+              <Ionicons name="speedometer" size={scaleWidth(40)} color="#fff" />
+            </LinearGradient>
+          </View>
         </Animated.View>
 
         {/* Title */}
@@ -103,7 +139,7 @@ export const RoleSelectScreen = ({ navigation }: any) => {
             title="I'm a Parent"
             subtitle="Monitor & protect your teen drivers"
             icon="shield-checkmark"
-            gradient={['#4F46E5', '#6C63FF']}
+            gradient={['#4338CA', '#6C63FF', '#818CF8']}
             glowColor="#6C63FF"
             onPress={() => navigation.navigate('ParentLogin')}
             animSlide={cardSlide1}
@@ -114,7 +150,7 @@ export const RoleSelectScreen = ({ navigation }: any) => {
             title="I'm a Rider"
             subtitle="Drive safe, earn badges & rewards"
             icon="bicycle"
-            gradient={['#7C3AED', '#A855F7']}
+            gradient={['#7C3AED', '#A855F7', '#C084FC']}
             glowColor="#A855F7"
             onPress={() => navigation.navigate('TeenLogin')}
             animSlide={cardSlide2}
@@ -124,8 +160,14 @@ export const RoleSelectScreen = ({ navigation }: any) => {
 
         {/* Admin link */}
         <Animated.View style={[styles.adminSection, { opacity: adminOpacity }]}>
-          <TouchableOpacity onPress={() => navigation.navigate('ParentLogin', { isAdmin: true })} activeOpacity={0.7}>
-            <Text style={styles.adminLink}>Admin Access →</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ParentLogin', { isAdmin: true })}
+            activeOpacity={0.7}
+            style={styles.adminBtn}
+          >
+            <Ionicons name="shield-outline" size={14} color={Colors.textTertiary} />
+            <Text style={styles.adminLink}>Admin Access</Text>
+            <Ionicons name="chevron-forward" size={12} color={Colors.textTertiary} />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -144,20 +186,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xxl,
   },
+  logoOuter: {
+    padding: 3,
+    borderRadius: scaleWidth(30),
+    backgroundColor: 'rgba(108, 99, 255, 0.12)',
+  },
   logoGradient: {
-    width: scaleWidth(88),
-    height: scaleWidth(88),
-    borderRadius: scaleWidth(28),
+    width: scaleWidth(82),
+    height: scaleWidth(82),
+    borderRadius: scaleWidth(27),
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadow.glow(Colors.primary),
+    ...Shadow.glowIntense(Colors.primary),
   },
   appName: {
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.heavy,
     color: Colors.textPrimary,
     textAlign: 'center',
-    letterSpacing: -1,
+    letterSpacing: -1.5,
   },
   tagline: {
     fontSize: FontSize.md,
@@ -165,27 +212,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.xs,
     marginBottom: Spacing.huge,
+    letterSpacing: 0.3,
   },
   cardsContainer: {
     gap: Spacing.lg,
   },
   roleCard: {
     borderRadius: BorderRadius.xxl,
-    padding: Spacing.xxl,
+    padding: Spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  cardHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.20)',
+    borderRadius: 1,
   },
   roleCardContent: {
     flex: 1,
   },
   roleIconContainer: {
-    width: scaleWidth(56),
-    height: scaleWidth(56),
+    width: scaleWidth(52),
+    height: scaleWidth(52),
     borderRadius: scaleWidth(16),
     backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
   },
   roleTitle: {
     fontSize: FontSize.xl,
@@ -195,20 +256,33 @@ const styles = StyleSheet.create({
   },
   roleSubtitle: {
     fontSize: FontSize.sm,
-    color: 'rgba(255,255,255,0.7)',
-    lineHeight: 18,
+    color: 'rgba(255,255,255,0.70)',
+    lineHeight: 20,
   },
   roleArrow: {
-    width: scaleWidth(36),
-    height: scaleWidth(36),
-    borderRadius: scaleWidth(18),
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    width: scaleWidth(40),
+    height: scaleWidth(40),
+    borderRadius: scaleWidth(20),
+    backgroundColor: 'rgba(255,255,255,0.12)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   adminSection: {
     alignItems: 'center',
     marginTop: Spacing.xxxl,
+  },
+  adminBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.bgCard,
+    borderRadius: BorderRadius.round,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   adminLink: {
     fontSize: FontSize.sm,

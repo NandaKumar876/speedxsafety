@@ -1,9 +1,14 @@
-// SpeedxSafety - Navigation Setup
+// ============================================
+// SpeedxSafety - Navigation (Spatial Edition)
+// Floating glassmorphism tab bar + spatial transitions
+// ============================================
+
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize } from '../../constants/theme';
+import { GlassTabBar } from '../../components/common/SpatialComponents';
 
 // Auth Screens
 import { RoleSelectScreen } from '../../screens/auth/RoleSelectScreen';
@@ -34,24 +39,27 @@ import { SettingsScreen } from '../../screens/shared/SettingsScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const tabBarStyle = {
-  backgroundColor: '#080C2A',
-  borderTopColor: 'rgba(255,255,255,0.06)',
-  borderTopWidth: 1,
-  height: 85,
-  paddingTop: 8,
-  paddingBottom: 28,
+// ── Spatial screen transition config ─────────
+const spatialScreenOptions = {
+  headerShown: false,
+  cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+  cardStyle: { backgroundColor: Colors.bgPrimary },
+  gestureEnabled: true,
+  gestureDirection: 'horizontal' as const,
 };
 
 function TeenTabs() {
   return (
     <Tab.Navigator
+      tabBar={(props) => (
+        <GlassTabBar
+          {...props}
+          activeTintColor={Colors.accent}
+          inactiveTintColor={Colors.textTertiary}
+        />
+      )}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle,
-        tabBarActiveTintColor: Colors.accent,
-        tabBarInactiveTintColor: Colors.textTertiary,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' as any },
         tabBarIcon: ({ color }) => {
           let iconName: any;
           switch (route.name) {
@@ -75,12 +83,15 @@ function TeenTabs() {
 function ParentTabs() {
   return (
     <Tab.Navigator
+      tabBar={(props) => (
+        <GlassTabBar
+          {...props}
+          activeTintColor={Colors.primary}
+          inactiveTintColor={Colors.textTertiary}
+        />
+      )}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' as any },
         tabBarIcon: ({ color }) => {
           let iconName: any;
           switch (route.name) {
@@ -106,12 +117,15 @@ function ParentTabs() {
 function AdminTabs() {
   return (
     <Tab.Navigator
+      tabBar={(props) => (
+        <GlassTabBar
+          {...props}
+          activeTintColor={Colors.primary}
+          inactiveTintColor={Colors.textTertiary}
+        />
+      )}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' as any },
         tabBarIcon: ({ color }) => {
           let iconName: any;
           switch (route.name) {
@@ -134,7 +148,7 @@ function AdminTabs() {
 
 export function AppNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={spatialScreenOptions}>
       {/* Auth Flow */}
       <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
       <Stack.Screen name="ParentLogin" component={ParentLoginScreen} />
@@ -147,7 +161,14 @@ export function AppNavigator() {
       <Stack.Screen name="AdminTabs" component={AdminTabs} />
 
       {/* Full-screen modals */}
-      <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
+      <Stack.Screen
+        name="LiveTracking"
+        component={LiveTrackingScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
     </Stack.Navigator>
   );
 }

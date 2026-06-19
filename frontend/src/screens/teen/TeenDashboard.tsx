@@ -1,5 +1,6 @@
 // ============================================
-// SpeedxSafety - Teen Dashboard (Speedometer)
+// SpeedxSafety - Teen Dashboard (Spatial Edition)
+// Premium speedometer, floating cards, ambient glow
 // ============================================
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -8,10 +9,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SpeedGauge } from '../../components/SpeedGauge';
 import { GlassCard, StatCard, StatusBadge } from '../../components/common';
+import { FloatingOrbs, PulseRing } from '../../components/common/SpatialComponents';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
+import { Springs, Duration } from '../../constants/spatial';
 import { mockTeens, mockTrips } from '../../data/mockData';
 import { Trip } from '../../types';
-import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
 
 export const TeenDashboard = ({ navigation }: any) => {
   const teen = mockTeens[0];
@@ -19,9 +22,14 @@ export const TeenDashboard = ({ navigation }: any) => {
   const [isDriving, setIsDriving] = useState(false);
   const sosPulse = useRef(new Animated.Value(1)).current;
   const headerFade = useRef(new Animated.Value(0)).current;
+  const headerSlide = useRef(new Animated.Value(20)).current;
+  const driveButtonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.timing(headerFade, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.parallel([
+      Animated.timing(headerFade, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.spring(headerSlide, { toValue: 0, ...Springs.gentle }),
+    ]).start();
   }, []);
 
   // Animate speed for demo
@@ -43,8 +51,8 @@ export const TeenDashboard = ({ navigation }: any) => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(sosPulse, { toValue: 1.1, duration: 800, useNativeDriver: true }),
-        Animated.timing(sosPulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(sosPulse, { toValue: 1.08, duration: 700, useNativeDriver: true }),
+        Animated.timing(sosPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
       ])
     ).start();
   }, []);
@@ -55,9 +63,14 @@ export const TeenDashboard = ({ navigation }: any) => {
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
+      <FloatingOrbs orbs={[
+        { color: isDriving && isOverLimit ? 'rgba(239, 68, 68, 0.06)' : 'rgba(108, 99, 255, 0.05)', size: 200, x: -50, y: 60 },
+        { color: 'rgba(168, 85, 247, 0.04)', size: 160, x: 280, y: 300 },
+      ]} />
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <Animated.View style={[styles.header, { opacity: headerFade }]}>
+        <Animated.View style={[styles.header, { opacity: headerFade, transform: [{ translateY: headerSlide }] }]}>
           <View>
             <Text style={styles.greeting}>Hey, {teen.name.split(' ')[0]} 👋</Text>
             <Text style={styles.subGreeting}>
@@ -74,16 +87,22 @@ export const TeenDashboard = ({ navigation }: any) => {
 
         {/* Speed Status Banner */}
         {isDriving && (
-          <GlassCard style={[
-            styles.statusBanner,
-            { borderColor: isOverLimit ? Colors.danger + '40' : Colors.safe + '40' }
-          ]}>
+          <GlassCard
+            style={[
+              styles.statusBanner,
+              { borderColor: isOverLimit ? Colors.dangerMuted : Colors.safeMuted },
+            ]}
+            glowColor={isOverLimit ? Colors.danger : Colors.safe}
+            elevation="floating"
+          >
             <View style={styles.statusRow}>
-              <Ionicons 
-                name={isOverLimit ? 'warning' : 'checkmark-circle'} 
-                size={20} 
-                color={isOverLimit ? Colors.danger : Colors.safe} 
-              />
+              <View style={[styles.statusIconBg, { backgroundColor: isOverLimit ? Colors.dangerMuted : Colors.safeMuted }]}>
+                <Ionicons
+                  name={isOverLimit ? 'warning' : 'checkmark-circle'}
+                  size={18}
+                  color={isOverLimit ? Colors.danger : Colors.safe}
+                />
+              </View>
               <Text style={[styles.statusText, { color: isOverLimit ? Colors.danger : Colors.safe }]}>
                 {isOverLimit ? 'SPEED LIMIT EXCEEDED!' : 'Within Speed Limit ✓'}
               </Text>
@@ -100,20 +119,26 @@ export const TeenDashboard = ({ navigation }: any) => {
         <TouchableOpacity
           style={styles.driveBtn}
           onPress={() => setIsDriving(!isDriving)}
-          activeOpacity={0.8}
+          onPressIn={() => Animated.spring(driveButtonScale, { toValue: 0.95, ...Springs.snappy }).start()}
+          onPressOut={() => Animated.spring(driveButtonScale, { toValue: 1, ...Springs.bouncy }).start()}
+          activeOpacity={0.9}
         >
-          <LinearGradient
-            colors={isDriving ? ['#EF4444', '#F87171'] : ['#22C55E', '#10B981']}
-            style={[
-              styles.driveBtnGradient,
-              isDriving ? Shadow.glow(Colors.danger) : Shadow.glow(Colors.safe)
-            ]}
-          >
-            <Ionicons name={isDriving ? 'stop' : 'play'} size={24} color="#fff" />
-            <Text style={styles.driveBtnText}>
-              {isDriving ? 'End Trip' : 'Start Trip'}
-            </Text>
-          </LinearGradient>
+          <Animated.View style={{ transform: [{ scale: driveButtonScale }] }}>
+            <LinearGradient
+              colors={isDriving ? ['#DC2626', '#EF4444', '#F87171'] : ['#15803D', '#22C55E', '#4ADE80']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[
+                styles.driveBtnGradient,
+                isDriving ? Shadow.glow(Colors.danger) : Shadow.glow(Colors.safe),
+              ]}
+            >
+              <Ionicons name={isDriving ? 'stop' : 'play'} size={22} color="#fff" />
+              <Text style={styles.driveBtnText}>
+                {isDriving ? 'End Trip' : 'Start Trip'}
+              </Text>
+            </LinearGradient>
+          </Animated.View>
         </TouchableOpacity>
 
         {/* Trip Stats */}
@@ -128,16 +153,9 @@ export const TeenDashboard = ({ navigation }: any) => {
         {/* SOS Button */}
         <View style={styles.sosSection}>
           <Animated.View style={{ transform: [{ scale: sosPulse }] }}>
-            <TouchableOpacity
-              style={styles.sosBtn}
-              onPress={() => {}}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={['#EF4444', '#F87171']}
-                style={styles.sosBtnGradient}
-              >
-                <Ionicons name="alert-circle" size={32} color="#fff" />
+            <TouchableOpacity style={styles.sosBtn} onPress={() => {}} activeOpacity={0.8}>
+              <LinearGradient colors={['#DC2626', '#EF4444', '#F87171']} style={[styles.sosBtnGradient, Shadow.glowIntense(Colors.danger)]}>
+                <Ionicons name="alert-circle" size={30} color="#fff" />
                 <Text style={styles.sosBtnText}>SOS</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -187,8 +205,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: scaleHeight(60),
-    paddingBottom: scaleHeight(100),
+    paddingTop: getSafeAreaTop() + 12,
+    paddingBottom: scaleHeight(120),
   },
   header: {
     flexDirection: 'row',
@@ -200,6 +218,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
+    letterSpacing: -0.5,
   },
   subGreeting: {
     fontSize: FontSize.md,
@@ -221,8 +240,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     gap: 4,
+    ...Shadow.sm,
   },
-  streakIcon: { fontSize: scaleFont(16) },
+  streakIcon: { fontSize: scaleFont(15) },
   streakText: {
     color: Colors.warning,
     fontWeight: FontWeight.bold,
@@ -239,16 +259,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
   },
+  statusIconBg: {
+    width: scaleWidth(28),
+    height: scaleWidth(28),
+    borderRadius: scaleWidth(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   statusText: {
     fontWeight: FontWeight.semibold,
     fontSize: FontSize.sm,
+    letterSpacing: 0.3,
   },
   gaugeContainer: {
     alignItems: 'center',
     marginVertical: Spacing.lg,
   },
   driveBtn: {
-    marginHorizontal: scaleWidth(20),
+    marginHorizontal: scaleWidth(16),
     marginBottom: Spacing.xxl,
   },
   driveBtnGradient: {
@@ -263,6 +291,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
+    letterSpacing: 0.3,
   },
   statsRow: {
     flexDirection: 'row',
@@ -276,18 +305,18 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   sosBtnGradient: {
-    width: scaleWidth(88),
-    height: scaleWidth(88),
-    borderRadius: scaleWidth(44),
+    width: scaleWidth(84),
+    height: scaleWidth(84),
+    borderRadius: scaleWidth(42),
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadow.glow(Colors.danger),
   },
   sosBtnText: {
     color: '#fff',
     fontSize: FontSize.xs,
     fontWeight: FontWeight.heavy,
-    marginTop: 2,
+    marginTop: 1,
+    letterSpacing: 1,
   },
   sosHint: {
     fontSize: FontSize.xs,

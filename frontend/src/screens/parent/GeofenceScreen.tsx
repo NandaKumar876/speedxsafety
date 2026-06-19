@@ -1,5 +1,5 @@
 // ============================================
-// SpeedxSafety - Geofence Management Screen
+// SpeedxSafety - Geofence Management (Spatial Edition)
 // ============================================
 
 import React, { useState } from 'react';
@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, GradientButton } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { mockGeofences } from '../../data/mockData';
-import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 
 export const GeofenceScreen = () => {
   const [geofences, setGeofences] = useState(mockGeofences);
@@ -27,15 +27,24 @@ export const GeofenceScreen = () => {
         <Text style={styles.subtitle}>Get alerts when your teen enters or leaves these areas</Text>
 
         {/* Map visual */}
-        <GlassCard style={styles.mapCard}>
-          <LinearGradient colors={['#070A1E', '#10173A']} style={styles.mapPlaceholder}>
-            {/* Simple zone visualization */}
+        <GlassCard style={styles.mapCard} elevation="floating">
+          <LinearGradient colors={['#060A1E', '#0D1245', '#060A1E']} style={styles.mapPlaceholder}>
+            {/* Grid */}
+            <View style={styles.mapGrid}>
+              {[...Array(4)].map((_, i) => (
+                <View key={`h${i}`} style={[styles.gridLineH, { top: `${25 * (i + 1)}%` }]} />
+              ))}
+              {[...Array(4)].map((_, i) => (
+                <View key={`v${i}`} style={[styles.gridLineV, { left: `${25 * (i + 1)}%` }]} />
+              ))}
+            </View>
+
             {geofences.map((fence, idx) => {
               const baseWidth = scaleWidth(fence.radius_m / 3);
               return (
                 <View key={fence.zone_id} style={[styles.zoneCircle, {
                   borderColor: fence.is_active ? fence.color : Colors.textTertiary + '40',
-                  backgroundColor: fence.is_active ? fence.color + '10' : 'transparent',
+                  backgroundColor: fence.is_active ? fence.color + '08' : 'transparent',
                   top: `${20 + idx * 25}%`,
                   left: `${15 + idx * 25}%`,
                   width: baseWidth,
@@ -50,18 +59,24 @@ export const GeofenceScreen = () => {
             })}
 
             <View style={styles.mapOverlay}>
-              <Ionicons name="expand" size={16} color={Colors.primaryLight} />
-              <Text style={styles.mapOverlayText}>Tap to expand map</Text>
+              <Ionicons name="expand" size={14} color={Colors.primaryLight} />
+              <Text style={styles.mapOverlayText}>Tap to expand</Text>
             </View>
           </LinearGradient>
         </GlassCard>
 
         {/* Geofence list */}
-        {geofences.map(fence => (
-          <GlassCard key={fence.zone_id} style={[styles.fenceCard, { borderLeftColor: fence.color, borderLeftWidth: 3.5 }]}>
+        {geofences.map((fence, idx) => (
+          <GlassCard
+            key={fence.zone_id}
+            style={[styles.fenceCard, { borderLeftColor: fence.color, borderLeftWidth: 3 }]}
+            animated
+            delay={idx * 80}
+            glowColor={fence.is_active ? fence.color : undefined}
+          >
             <View style={styles.fenceHeader}>
               <View style={styles.fenceLeft}>
-                <View style={[styles.fenceIcon, { backgroundColor: fence.color + '1A' }]}>
+                <View style={[styles.fenceIcon, { backgroundColor: fence.color + '15' }]}>
                   <Ionicons
                     name={fence.label === 'Home' ? 'home' : fence.label === 'School' ? 'school' : 'location'}
                     size={20}
@@ -83,16 +98,16 @@ export const GeofenceScreen = () => {
 
             <View style={styles.fenceDetails}>
               <View style={styles.fenceDetail}>
-                <Ionicons name="navigate-outline" size={14} color={Colors.textTertiary} />
+                <Ionicons name="navigate-outline" size={13} color={Colors.textTertiary} />
                 <Text style={styles.fenceDetailText}>
                   {fence.center_lat.toFixed(4)}, {fence.center_lng.toFixed(4)}
                 </Text>
               </View>
-              <View style={[styles.fenceStatusBadge, { 
-                backgroundColor: fence.is_active ? Colors.safe + '1A' : Colors.textTertiary + '1A' 
+              <View style={[styles.fenceStatusBadge, {
+                backgroundColor: fence.is_active ? Colors.safeMuted : Colors.bgCard,
               }]}>
-                <Text style={[styles.fenceStatusText, { 
-                  color: fence.is_active ? Colors.safe : Colors.textTertiary 
+                <Text style={[styles.fenceStatusText, {
+                  color: fence.is_active ? Colors.safe : Colors.textTertiary,
                 }]}>
                   {fence.is_active ? 'Active' : 'Paused'}
                 </Text>
@@ -116,49 +131,26 @@ export const GeofenceScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: scaleHeight(60), paddingBottom: scaleHeight(100) },
-  title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120) },
+  title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, letterSpacing: -0.5 },
   subtitle: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: 4, marginBottom: Spacing.xxl },
   mapCard: { padding: 0, overflow: 'hidden', marginBottom: Spacing.xxl },
-  mapPlaceholder: {
-    height: scaleHeight(180),
-    borderRadius: BorderRadius.xl,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  zoneCircle: {
-    position: 'absolute',
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  mapPlaceholder: { height: scaleHeight(190), borderRadius: BorderRadius.xl, position: 'relative', overflow: 'hidden' },
+  mapGrid: { ...StyleSheet.absoluteFillObject },
+  gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
+  gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
+  zoneCircle: { position: 'absolute', borderWidth: 2, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
   zoneLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
   mapOverlay: {
-    position: 'absolute',
-    bottom: Spacing.md,
-    right: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(6, 9, 25, 0.7)',
-    borderRadius: scaleWidth(8),
-    paddingHorizontal: scaleWidth(10),
-    paddingVertical: scaleHeight(5),
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
+    position: 'absolute', bottom: Spacing.md, right: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(6, 9, 25, 0.80)', borderRadius: scaleWidth(8), paddingHorizontal: scaleWidth(10), paddingVertical: scaleHeight(5),
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)',
   },
   mapOverlayText: { fontSize: FontSize.xs, color: Colors.primaryLight, fontWeight: FontWeight.medium },
   fenceCard: { marginBottom: Spacing.md },
   fenceHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
   fenceLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  fenceIcon: {
-    width: scaleWidth(40),
-    height: scaleWidth(40),
-    borderRadius: scaleWidth(12),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  fenceIcon: { width: scaleWidth(42), height: scaleWidth(42), borderRadius: scaleWidth(14), justifyContent: 'center', alignItems: 'center' },
   fenceName: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textPrimary },
   fenceRadius: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: 1 },
   fenceDetails: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

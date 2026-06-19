@@ -1,5 +1,6 @@
 // ============================================
-// SpeedxSafety - Reusable UI Components
+// SpeedxSafety - Reusable UI Components (Spatial Edition)
+// Premium glassmorphism, floating depth, micro-animations
 // ============================================
 
 import React, { useEffect, useRef } from 'react';
@@ -16,44 +17,60 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, FontFamily, Shadow } from '../../constants/theme';
+import { Springs, Duration, Glass, TouchFeedback } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 
-// ---- Glass Card ----
+// ── Glass Card (Spatial Edition) ─────────────
 interface GlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle | any;
   onPress?: () => void;
   animated?: boolean;
   delay?: number;
+  elevation?: 'surface' | 'raised' | 'floating';
+  glowColor?: string;
 }
 
-export const GlassCard: React.FC<GlassCardProps> = ({ children, style, onPress, animated = false, delay = 0 }) => {
+export const GlassCard: React.FC<GlassCardProps> = ({
+  children, style, onPress, animated = false, delay = 0,
+  elevation = 'raised', glowColor,
+}) => {
   const fadeAnim = useRef(new Animated.Value(animated ? 0 : 1)).current;
-  const slideAnim = useRef(new Animated.Value(animated ? 20 : 0)).current;
+  const slideAnim = useRef(new Animated.Value(animated ? 24 : 0)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (animated) {
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 500,
+          duration: Duration.entrance,
           delay,
           useNativeDriver: true,
         }),
-        Animated.timing(slideAnim, {
+        Animated.spring(slideAnim, {
           toValue: 0,
-          duration: 500,
           delay,
-          useNativeDriver: true,
+          ...Springs.gentle,
         }),
       ]).start();
     }
   }, [animated, delay]);
 
+  const elevationStyle = elevation === 'floating'
+    ? Shadow.md
+    : elevation === 'raised'
+    ? Shadow.sm
+    : Shadow.surface;
+
+  const glowStyle = glowColor ? Shadow.glowSoft(glowColor) : {};
+
   const content = (
     <Animated.View
       style={[
         styles.glassCard,
+        elevationStyle,
+        glowStyle,
         style,
         animated && {
           opacity: fadeAnim,
@@ -61,17 +78,30 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, style, onPress, 
         },
       ]}
     >
+      {/* Gradient top-edge highlight */}
+      <View style={styles.glassHighlight} />
       {children}
     </Animated.View>
   );
 
   if (onPress) {
-    return <TouchableOpacity onPress={onPress} activeOpacity={0.8}>{content}</TouchableOpacity>;
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={() => Animated.spring(pressScale, { toValue: TouchFeedback.pressedScale, ...Springs.snappy }).start()}
+        onPressOut={() => Animated.spring(pressScale, { toValue: 1, ...Springs.bouncy }).start()}
+        activeOpacity={0.9}
+      >
+        <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+          {content}
+        </Animated.View>
+      </TouchableOpacity>
+    );
   }
   return content;
 };
 
-// ---- Gradient Button ----
+// ── Gradient Button (Spatial Edition) ────────
 interface GradientButtonProps {
   title: string;
   onPress: () => void;
@@ -89,18 +119,19 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const height = size === 'sm' ? scaleHeight(40) : size === 'lg' ? scaleHeight(56) : scaleHeight(48);
   const fontSize = size === 'sm' ? FontSize.sm : size === 'lg' ? FontSize.lg : FontSize.md;
+  const gradientColors = colors || Colors.gradientPrimary;
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.97,
-      useNativeDriver: true,
+      toValue: TouchFeedback.pressedScale,
+      ...Springs.snappy,
     }).start();
   };
 
   const handlePressOut = () => {
     Animated.spring(scaleAnim, {
       toValue: 1,
-      useNativeDriver: true,
+      ...Springs.bouncy,
     }).start();
   };
 
@@ -114,10 +145,18 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
         activeOpacity={0.9}
       >
         <LinearGradient
-          colors={colors || Colors.gradientPrimary as any}
+          colors={gradientColors as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={[styles.gradientBtn, { height, opacity: disabled ? 0.5 : 1 }]}
+          style={[
+            styles.gradientBtn,
+            {
+              height,
+              opacity: disabled ? 0.5 : 1,
+            },
+            Shadow.md,
+            Shadow.glowSoft(gradientColors[0]),
+          ]}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
@@ -133,7 +172,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   );
 };
 
-// ---- Glass Input ----
+// ── Glass Input (Spatial Edition) ────────────
 interface GlassInputProps {
   placeholder: string;
   value: string;
@@ -146,36 +185,86 @@ interface GlassInputProps {
 
 export const GlassInput: React.FC<GlassInputProps> = ({
   placeholder, value, onChangeText, icon, secureTextEntry, keyboardType, style,
-}) => (
-  <View style={[styles.glassInput, style]}>
-    {icon && <View style={styles.inputIcon}>{icon}</View>}
-    <TextInput
-      placeholder={placeholder}
-      placeholderTextColor={Colors.textTertiary}
-      value={value}
-      onChangeText={onChangeText}
-      secureTextEntry={secureTextEntry}
-      keyboardType={keyboardType}
-      style={styles.inputText}
-    />
-  </View>
-);
+}) => {
+  const focusAnim = useRef(new Animated.Value(0)).current;
 
-// ---- Status Badge ----
+  const handleFocus = () => {
+    Animated.timing(focusAnim, {
+      toValue: 1,
+      duration: Duration.normal,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleBlur = () => {
+    Animated.timing(focusAnim, {
+      toValue: 0,
+      duration: Duration.normal,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const borderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.border, Colors.borderGlow],
+  });
+
+  return (
+    <Animated.View style={[styles.glassInput, { borderColor }, style]}>
+      {icon && <View style={styles.inputIcon}>{icon}</View>}
+      <TextInput
+        placeholder={placeholder}
+        placeholderTextColor={Colors.textTertiary}
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        style={styles.inputText}
+      />
+    </Animated.View>
+  );
+};
+
+// ── Status Badge (Spatial Edition) ───────────
 interface StatusBadgeProps {
   label: string;
   color: string;
   small?: boolean;
+  pulse?: boolean;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ label, color, small }) => (
-  <View style={[styles.statusBadge, { backgroundColor: color + '1A' }, small && { paddingHorizontal: scaleWidth(8), paddingVertical: scaleHeight(2) }]}>
-    <View style={[styles.statusDot, { backgroundColor: color }]} />
-    <Text style={[styles.statusText, { color }, small && { fontSize: FontSize.xs }]}>{label}</Text>
-  </View>
-);
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ label, color, small, pulse }) => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
-// ---- Stat Card ----
+  useEffect(() => {
+    if (pulse) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.05, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        ])
+      ).start();
+    }
+  }, [pulse]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.statusBadge,
+        { backgroundColor: color + '18' },
+        small && { paddingHorizontal: scaleWidth(8), paddingVertical: scaleHeight(2) },
+        pulse && { transform: [{ scale: pulseAnim }] },
+      ]}
+    >
+      <View style={[styles.statusDot, { backgroundColor: color, ...Shadow.glow(color) }]} />
+      <Text style={[styles.statusText, { color }, small && { fontSize: FontSize.xs }]}>{label}</Text>
+    </Animated.View>
+  );
+};
+
+// ── Stat Card (Spatial Edition) ──────────────
 interface StatCardProps {
   label: string;
   value: string;
@@ -183,33 +272,56 @@ interface StatCardProps {
   color?: string;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ label, value, icon, color = Colors.primary }) => (
-  <View style={styles.statCard}>
-    {icon && <Text style={{ fontSize: scaleFont(20), marginBottom: scaleHeight(4) }}>{icon}</Text>}
-    <Text style={[styles.statValue, { color }]}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
+export const StatCard: React.FC<StatCardProps> = ({ label, value, icon, color = Colors.primary }) => {
+  const scaleAnim = useRef(new Animated.Value(0)).current;
 
-// ---- Section Header ----
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      ...Springs.bouncy,
+    }).start();
+  }, []);
+
+  return (
+    <Animated.View style={[styles.statCard, { transform: [{ scale: scaleAnim }] }]}>
+      {icon && <Text style={{ fontSize: scaleFont(18), marginBottom: scaleHeight(4) }}>{icon}</Text>}
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </Animated.View>
+  );
+};
+
+// ── Section Header (Spatial Edition) ─────────
 interface SectionHeaderProps {
   title: string;
   action?: string;
   onAction?: () => void;
 }
 
-export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, action, onAction }) => (
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    {action && (
-      <TouchableOpacity onPress={onAction} activeOpacity={0.7}>
-        <Text style={styles.sectionAction}>{action}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
+export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, action, onAction }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(12)).current;
 
-// ---- Skeleton Loader ----
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, ...Springs.gentle }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={[styles.sectionHeader, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {action && (
+        <TouchableOpacity onPress={onAction} activeOpacity={0.7}>
+          <Text style={styles.sectionAction}>{action}</Text>
+        </TouchableOpacity>
+      )}
+    </Animated.View>
+  );
+};
+
+// ── Skeleton Loader (Spatial Edition) ────────
 interface SkeletonProps {
   width: number | string;
   height: number;
@@ -218,16 +330,21 @@ interface SkeletonProps {
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({ width, height, borderRadius = BorderRadius.md, style }) => {
-  const pulseAnim = useRef(new Animated.Value(0.3)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.7, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
       ])
     ).start();
   }, []);
+
+  const opacity = shimmerAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.3, 0.6, 0.3],
+  });
 
   return (
     <Animated.View
@@ -238,7 +355,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({ width, height, borderRadius 
           height,
           borderRadius,
           backgroundColor: Colors.shimmer,
-          opacity: pulseAnim,
+          opacity,
         },
         style,
       ]}
@@ -246,23 +363,31 @@ export const Skeleton: React.FC<SkeletonProps> = ({ width, height, borderRadius 
   );
 };
 
-// ---- Styles ----
+// ── Styles ───────────────────────────────────
 const styles = StyleSheet.create({
   glassCard: {
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.xl,
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.lg,
     overflow: 'hidden',
-    ...Shadow.sm,
+    position: 'relative',
+  },
+  glassHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    right: 16,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 1,
   },
   gradientBtn: {
     borderRadius: BorderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.xxl,
-    ...Shadow.md,
   },
   btnContent: {
     flexDirection: 'row',
@@ -277,11 +402,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgGlass,
     borderRadius: BorderRadius.lg,
     borderWidth: 1.2,
-    borderColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    height: scaleHeight(52),
+    height: scaleHeight(54),
     overflow: 'hidden',
   },
   inputIcon: {
@@ -296,7 +420,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: scaleWidth(12),
-    paddingVertical: scaleHeight(6),
+    paddingVertical: scaleHeight(5),
     borderRadius: BorderRadius.round,
   },
   statusDot: {
@@ -313,7 +437,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.bgCard,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.md,
     alignItems: 'center',
@@ -345,7 +469,7 @@ const styles = StyleSheet.create({
   },
   sectionAction: {
     fontSize: FontSize.sm,
-    color: Colors.primary,
+    color: Colors.primaryLight,
     fontWeight: FontWeight.semibold,
   },
 });

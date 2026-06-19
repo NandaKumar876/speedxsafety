@@ -1,5 +1,5 @@
 // ============================================
-// SpeedxSafety - Parent Dashboard
+// SpeedxSafety - Parent Dashboard (Spatial Edition)
 // ============================================
 
 import React, { useEffect, useRef } from 'react';
@@ -8,30 +8,35 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, StatusBadge, SectionHeader } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
+import { Springs, Duration } from '../../constants/spatial';
 import { mockTeens, mockAlerts } from '../../data/mockData';
-import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const ParentDashboard = ({ navigation }: any) => {
   const unreadAlerts = mockAlerts.filter(a => !a.read).length;
   const headerAnim = useRef(new Animated.Value(0)).current;
+  const headerSlide = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
-    Animated.timing(headerAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.parallel([
+      Animated.timing(headerAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.spring(headerSlide, { toValue: 0, ...Springs.gentle }),
+    ]).start();
   }, []);
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <Animated.View style={[styles.header, { opacity: headerAnim }]}>
+        <Animated.View style={[styles.header, { opacity: headerAnim, transform: [{ translateY: headerSlide }] }]}>
           <View>
             <Text style={styles.greeting}>Welcome back 👋</Text>
             <Text style={styles.subGreeting}>Your family's driving overview</Text>
           </View>
           <TouchableOpacity style={styles.alertBtn} onPress={() => navigation.navigate('Alerts')} activeOpacity={0.7}>
-            <Ionicons name="notifications" size={22} color={Colors.textPrimary} />
+            <Ionicons name="notifications" size={20} color={Colors.textPrimary} />
             {unreadAlerts > 0 && (
               <View style={styles.alertBadge}>
                 <Text style={styles.alertBadgeText}>{unreadAlerts}</Text>
@@ -40,15 +45,11 @@ export const ParentDashboard = ({ navigation }: any) => {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Live Map Preview — now a tappable card */}
+        {/* Live Map Preview */}
         <TouchableOpacity activeOpacity={0.9} onPress={() => navigation.navigate('LiveTracking')}>
-          <GlassCard style={styles.mapCard} animated delay={100}>
+          <GlassCard style={styles.mapCard} animated delay={100} elevation="floating">
             <View style={styles.mapPlaceholder}>
-              <LinearGradient
-                colors={['#080C2A', '#0D1245', '#080C2A']}
-                style={styles.mapGradient}
-              >
-                {/* Map grid */}
+              <LinearGradient colors={['#060A1E', '#0D1245', '#060A1E']} style={styles.mapGradient}>
                 <View style={styles.mapGrid}>
                   {[...Array(5)].map((_, i) => (
                     <View key={`h${i}`} style={[styles.gridLineH, { top: `${20 * (i + 1)}%` }]} />
@@ -58,12 +59,8 @@ export const ParentDashboard = ({ navigation }: any) => {
                   ))}
                 </View>
 
-                {/* Teen location pins */}
                 {mockTeens.map((teen, index) => (
-                  <View 
-                    key={teen.teen_id} 
-                    style={[styles.mapPin, { top: `${20 + index * 35}%`, left: `${15 + index * 40}%` }]}
-                  >
+                  <View key={teen.teen_id} style={[styles.mapPin, { top: `${20 + index * 35}%`, left: `${15 + index * 40}%` }]}>
                     <LinearGradient
                       colors={teen.is_driving ? ['#22C55E', '#10B981'] : ['#475569', '#64748B']}
                       style={styles.pinDot}
@@ -72,14 +69,11 @@ export const ParentDashboard = ({ navigation }: any) => {
                     </LinearGradient>
                     <View style={styles.pinLabel}>
                       <Text style={styles.pinName}>{teen.name.split(' ')[0]}</Text>
-                      {teen.is_driving && (
-                        <Text style={styles.pinSpeed}>{teen.current_speed} km/h</Text>
-                      )}
+                      {teen.is_driving && <Text style={styles.pinSpeed}>{teen.current_speed} km/h</Text>}
                     </View>
                   </View>
                 ))}
 
-                {/* Map label */}
                 <View style={styles.mapLabel}>
                   <View style={styles.liveIndicator}>
                     <View style={styles.liveDot} />
@@ -100,11 +94,16 @@ export const ParentDashboard = ({ navigation }: any) => {
         {mockTeens.map((teen, idx) => {
           const isOver = (teen.current_speed || 0) > teen.speed_limit;
           return (
-            <GlassCard key={teen.teen_id} style={[styles.teenCard, teen.is_driving && isOver && { borderColor: Colors.danger + '40' }]} animated delay={300 + idx * 120}>
+            <GlassCard
+              key={teen.teen_id}
+              style={[styles.teenCard, teen.is_driving && isOver && { borderColor: Colors.dangerMuted }]}
+              animated delay={300 + idx * 120}
+              glowColor={teen.is_driving && isOver ? Colors.danger : undefined}
+            >
               <View style={styles.teenHeader}>
                 <View style={styles.teenLeft}>
                   <LinearGradient
-                    colors={teen.is_driving ? (isOver ? ['#EF4444', '#F87171'] : ['#22C55E', '#10B981']) : ['#334155', '#475569']}
+                    colors={teen.is_driving ? (isOver ? ['#DC2626', '#EF4444'] : ['#15803D', '#22C55E']) : ['#334155', '#475569']}
                     style={styles.teenAvatar}
                   >
                     <Text style={styles.teenInitial}>{teen.name[0]}</Text>
@@ -115,6 +114,7 @@ export const ParentDashboard = ({ navigation }: any) => {
                       label={teen.is_driving ? (isOver ? 'Over Limit!' : 'Driving') : 'Parked'}
                       color={teen.is_driving ? (isOver ? Colors.danger : Colors.safe) : Colors.textTertiary}
                       small
+                      pulse={teen.is_driving && isOver}
                     />
                   </View>
                 </View>
@@ -127,18 +127,13 @@ export const ParentDashboard = ({ navigation }: any) => {
                       <Text style={styles.speedUnit}>km/h</Text>
                     </View>
                   ) : (
-                    <TouchableOpacity 
-                      style={styles.trackBtn}
-                      onPress={() => navigation.navigate('LiveTracking')}
-                      activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.trackBtn} onPress={() => navigation.navigate('LiveTracking')} activeOpacity={0.7}>
                       <Ionicons name="locate-outline" size={16} color={Colors.primary} />
                     </TouchableOpacity>
                   )}
                 </View>
               </View>
 
-              {/* Teen stats row */}
               <View style={styles.teenStats}>
                 <View style={styles.teenStat}>
                   <Text style={styles.teenStatLabel}>Safety Score</Text>
@@ -146,8 +141,7 @@ export const ParentDashboard = ({ navigation }: any) => {
                     <View style={styles.scoreBg}>
                       <LinearGradient
                         colors={teen.safety_score >= 80 ? (Colors.gradientSafe as any) : (Colors.gradientWarning as any)}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                         style={[styles.scoreFill, { width: `${teen.safety_score}%` }]}
                       />
                     </View>
@@ -166,19 +160,9 @@ export const ParentDashboard = ({ navigation }: any) => {
                 </View>
               </View>
 
-              {/* Track button for driving teens */}
               {teen.is_driving && (
-                <TouchableOpacity
-                  style={styles.trackLiveBtn}
-                  onPress={() => navigation.navigate('LiveTracking')}
-                  activeOpacity={0.7}
-                >
-                  <LinearGradient
-                    colors={Colors.gradientPrimary as any}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.trackLiveGradient}
-                  >
+                <TouchableOpacity style={styles.trackLiveBtn} onPress={() => navigation.navigate('LiveTracking')} activeOpacity={0.7}>
+                  <LinearGradient colors={Colors.gradientPrimary as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.trackLiveGradient}>
                     <Ionicons name="navigate" size={14} color="#fff" />
                     <Text style={styles.trackLiveText}>Track Live</Text>
                   </LinearGradient>
@@ -191,16 +175,16 @@ export const ParentDashboard = ({ navigation }: any) => {
         {/* Recent Alerts */}
         <SectionHeader title="Recent Alerts" action="View All" onAction={() => navigation.navigate('Alerts')} />
         {mockAlerts.slice(0, 3).map((alert, idx) => (
-          <GlassCard key={alert.alert_id} style={[styles.alertCard, !alert.read && styles.alertCardUnread]} animated delay={600 + idx * 80}>
+          <GlassCard key={alert.alert_id} style={[styles.alertCard, !alert.read && { borderColor: Colors.primaryMuted }]} animated delay={600 + idx * 80}>
             <View style={styles.alertRow}>
-              <View style={[styles.alertIcon, { backgroundColor: getAlertColor(alert.type) + '1A' }]}>
+              <View style={[styles.alertIcon, { backgroundColor: getAlertColor(alert.type) + '15' }]}>
                 <Ionicons name={getAlertIcon(alert.type)} size={18} color={getAlertColor(alert.type)} />
               </View>
               <View style={styles.alertContent}>
                 <Text style={styles.alertMessage} numberOfLines={2}>{alert.message}</Text>
                 <Text style={styles.alertTime}>{getTimeAgo(alert.timestamp)}</Text>
               </View>
-              {!alert.read && <View style={styles.unreadDot} />}
+              {!alert.read && <View style={[styles.unreadDot, Shadow.glow(Colors.primaryLight)]} />}
             </View>
           </GlassCard>
         ))}
@@ -215,9 +199,9 @@ export const ParentDashboard = ({ navigation }: any) => {
             { icon: 'people', label: 'Manage', color: Colors.accent, nav: 'Settings' },
           ].map((action, idx) => (
             <TouchableOpacity key={idx} style={styles.actionBtn} onPress={() => navigation.navigate(action.nav)} activeOpacity={0.7}>
-              <LinearGradient colors={[action.color + '1A', action.color + '05']} style={styles.actionIcon}>
+              <View style={[styles.actionIcon, { backgroundColor: action.color + '12', borderColor: action.color + '20' }]}>
                 <Ionicons name={action.icon as any} size={22} color={action.color} />
-              </LinearGradient>
+              </View>
               <Text style={styles.actionLabel}>{action.label}</Text>
             </TouchableOpacity>
           ))}
@@ -227,29 +211,12 @@ export const ParentDashboard = ({ navigation }: any) => {
   );
 };
 
-// Helper functions
 const getAlertIcon = (type: string): any => {
-  switch (type) {
-    case 'speed': return 'speedometer';
-    case 'geo': return 'location';
-    case 'crash': return 'alert-circle';
-    case 'curfew': return 'moon';
-    case 'sos': return 'warning';
-    default: return 'alert';
-  }
+  switch (type) { case 'speed': return 'speedometer'; case 'geo': return 'location'; case 'crash': return 'alert-circle'; case 'curfew': return 'moon'; case 'sos': return 'warning'; default: return 'alert'; }
 };
-
 const getAlertColor = (type: string): string => {
-  switch (type) {
-    case 'speed': return Colors.danger;
-    case 'geo': return Colors.warning;
-    case 'crash': return Colors.danger;
-    case 'curfew': return Colors.primaryLight;
-    case 'sos': return Colors.danger;
-    default: return Colors.textSecondary;
-  }
+  switch (type) { case 'speed': return Colors.danger; case 'geo': return Colors.warning; case 'crash': return Colors.danger; case 'curfew': return Colors.primaryLight; case 'sos': return Colors.danger; default: return Colors.textSecondary; }
 };
-
 const getTimeAgo = (timestamp: number): string => {
   const mins = Math.round((Date.now() - timestamp) / 60000);
   if (mins < 60) return `${mins}m ago`;
@@ -260,131 +227,41 @@ const getTimeAgo = (timestamp: number): string => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { 
-    paddingHorizontal: Spacing.xl, 
-    paddingTop: scaleHeight(60), 
-    paddingBottom: scaleHeight(100) 
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.xxl,
-  },
-  greeting: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120) },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xxl },
+  greeting: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, letterSpacing: -0.5 },
   subGreeting: { fontSize: FontSize.md, color: Colors.textTertiary, marginTop: 2 },
-  alertBtn: {
-    width: scaleWidth(44),
-    height: scaleWidth(44),
-    borderRadius: scaleWidth(14),
-    backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  alertBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: Colors.danger,
-    borderRadius: scaleWidth(10),
-    width: scaleWidth(20),
-    height: scaleWidth(20),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  alertBtn: { width: scaleWidth(44), height: scaleWidth(44), borderRadius: scaleWidth(14), backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, justifyContent: 'center', alignItems: 'center', ...Shadow.sm },
+  alertBadge: { position: 'absolute', top: -4, right: -4, backgroundColor: Colors.danger, borderRadius: scaleWidth(10), width: scaleWidth(20), height: scaleWidth(20), justifyContent: 'center', alignItems: 'center' },
   alertBadgeText: { color: '#fff', fontSize: 10, fontWeight: FontWeight.bold },
   mapCard: { padding: 0, overflow: 'hidden', marginBottom: Spacing.lg },
   mapPlaceholder: { height: scaleHeight(200), borderRadius: BorderRadius.xl, overflow: 'hidden' },
   mapGradient: { flex: 1, padding: Spacing.lg, position: 'relative' },
   mapGrid: { ...StyleSheet.absoluteFillObject },
-  gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(108, 99, 255, 0.05)' },
-  gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(108, 99, 255, 0.05)' },
+  gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
+  gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
   mapPin: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 6 },
-  pinDot: {
-    width: scaleWidth(28),
-    height: scaleWidth(28),
-    borderRadius: scaleWidth(14),
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadow.sm,
-  },
-  pinLabel: {
-    backgroundColor: 'rgba(6, 8, 26, 0.75)',
-    borderRadius: scaleWidth(8),
-    paddingHorizontal: scaleWidth(8),
-    paddingVertical: scaleHeight(3),
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
+  pinDot: { width: scaleWidth(28), height: scaleWidth(28), borderRadius: scaleWidth(14), justifyContent: 'center', alignItems: 'center', ...Shadow.sm },
+  pinLabel: { backgroundColor: 'rgba(6, 8, 26, 0.80)', borderRadius: scaleWidth(8), paddingHorizontal: scaleWidth(8), paddingVertical: scaleHeight(3), borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' },
   pinName: { color: '#fff', fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
   pinSpeed: { color: Colors.safe, fontSize: 10, fontWeight: FontWeight.bold },
-  mapLabel: {
-    position: 'absolute',
-    bottom: Spacing.md,
-    left: Spacing.md,
-    right: Spacing.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(6, 8, 26, 0.7)',
-    borderRadius: scaleWidth(8),
-    paddingHorizontal: scaleWidth(10),
-    paddingVertical: scaleHeight(4),
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  liveDot: {
-    width: scaleWidth(6),
-    height: scaleWidth(6),
-    borderRadius: scaleWidth(3),
-    backgroundColor: Colors.safe,
-  },
+  mapLabel: { position: 'absolute', bottom: Spacing.md, left: Spacing.md, right: Spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  liveIndicator: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(6, 8, 26, 0.75)', borderRadius: scaleWidth(8), paddingHorizontal: scaleWidth(10), paddingVertical: scaleHeight(4), borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' },
+  liveDot: { width: scaleWidth(6), height: scaleWidth(6), borderRadius: scaleWidth(3), backgroundColor: Colors.safe },
   mapLabelText: { color: Colors.primaryLight, fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
-  tapHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(6, 8, 26, 0.7)',
-    borderRadius: scaleWidth(8),
-    paddingHorizontal: scaleWidth(10),
-    paddingVertical: scaleHeight(4),
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
+  tapHint: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(6, 8, 26, 0.75)', borderRadius: scaleWidth(8), paddingHorizontal: scaleWidth(10), paddingVertical: scaleHeight(4), borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' },
   tapHintText: { color: Colors.primaryLight, fontSize: FontSize.xs, fontWeight: FontWeight.medium },
   teenCard: { marginBottom: Spacing.md },
   teenHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg },
   teenLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  teenAvatar: {
-    width: scaleWidth(44),
-    height: scaleWidth(44),
-    borderRadius: scaleWidth(14),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  teenAvatar: { width: scaleWidth(44), height: scaleWidth(44), borderRadius: scaleWidth(14), justifyContent: 'center', alignItems: 'center' },
   teenInitial: { color: '#fff', fontSize: FontSize.lg, fontWeight: FontWeight.bold },
   teenName: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textPrimary, marginBottom: 4 },
   teenRight: { alignItems: 'flex-end' },
   speedDisplay: { alignItems: 'center' },
   currentSpeed: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy },
   speedUnit: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: -2 },
-  trackBtn: {
-    width: scaleWidth(36),
-    height: scaleWidth(36),
-    borderRadius: scaleWidth(12),
-    backgroundColor: Colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-  },
+  trackBtn: { width: scaleWidth(36), height: scaleWidth(36), borderRadius: scaleWidth(12), backgroundColor: Colors.primaryMuted, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: Colors.borderAccent },
   teenStats: { flexDirection: 'row', gap: Spacing.lg },
   teenStat: { flex: 1 },
   teenStatLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginBottom: 4 },
@@ -394,40 +271,17 @@ const styles = StyleSheet.create({
   scoreFill: { height: scaleHeight(6), borderRadius: scaleHeight(3) },
   scoreText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, minWidth: scaleWidth(24) },
   trackLiveBtn: { marginTop: Spacing.lg },
-  trackLiveGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: scaleHeight(36),
-    borderRadius: BorderRadius.md,
-    gap: 6,
-  },
+  trackLiveGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: scaleHeight(38), borderRadius: BorderRadius.md, gap: 6 },
   trackLiveText: { color: '#fff', fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   alertCard: { marginBottom: Spacing.sm },
-  alertCardUnread: { borderColor: Colors.primaryLight + '30' },
   alertRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  alertIcon: {
-    width: scaleWidth(38),
-    height: scaleWidth(38),
-    borderRadius: scaleWidth(12),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  alertIcon: { width: scaleWidth(38), height: scaleWidth(38), borderRadius: scaleWidth(12), justifyContent: 'center', alignItems: 'center' },
   alertContent: { flex: 1 },
   alertMessage: { fontSize: FontSize.sm, color: Colors.textPrimary, fontWeight: FontWeight.medium, lineHeight: 18 },
   alertTime: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 2 },
   unreadDot: { width: scaleWidth(8), height: scaleWidth(8), borderRadius: scaleWidth(4), backgroundColor: Colors.primaryLight },
   actionsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md },
   actionBtn: { flex: 1, alignItems: 'center' },
-  actionIcon: {
-    width: scaleWidth(56),
-    height: scaleWidth(56),
-    borderRadius: scaleWidth(18),
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
+  actionIcon: { width: scaleWidth(56), height: scaleWidth(56), borderRadius: scaleWidth(18), justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.sm, borderWidth: 1 },
   actionLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: FontWeight.medium },
 });

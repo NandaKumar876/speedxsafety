@@ -1,15 +1,17 @@
 // ============================================
-// SpeedxSafety - Live Tracking Screen
-// Realistic animated bike/car tracking on map
+// SpeedxSafety - Live Tracking Screen (Spatial Edition)
+// Realistic animated bike/car tracking on map with premium overlays
 // ============================================
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { scaleWidth, scaleHeight, scaleFont, getSafeAreaBottom } from '../../utils/responsive';
+import { AmbientGlow } from '../../components/common/SpatialComponents';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -50,15 +52,21 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
   const [currentPoint, setCurrentPoint] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  
   const markerX = useRef(new Animated.Value(ROUTE_POINTS[0].x * SCREEN_WIDTH)).current;
-  const markerY = useRef(new Animated.Value(ROUTE_POINTS[0].y * SCREEN_HEIGHT * 0.7)).current;
+  const markerY = useRef(new Animated.Value(ROUTE_POINTS[0].y * SCREEN_HEIGHT * 0.65)).current;
+  
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const pulseOpacity = useRef(new Animated.Value(0.6)).current;
   const trailOpacity = useRef(new Animated.Value(0)).current;
+  const panelFade = useRef(new Animated.Value(0)).current;
 
-  // Start trail fade in
+  // Start trail and panel animations
   useEffect(() => {
-    Animated.timing(trailOpacity, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    Animated.parallel([
+      Animated.timing(trailOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.timing(panelFade, { toValue: 1, duration: 600, useNativeDriver: true }),
+    ]).start();
   }, []);
 
   // Pulse animation
@@ -66,11 +74,11 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
     Animated.loop(
       Animated.parallel([
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 1600, useNativeDriver: true }),
           Animated.timing(pulseAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
         ]),
         Animated.sequence([
-          Animated.timing(pulseOpacity, { toValue: 0, duration: 1500, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0, duration: 1600, useNativeDriver: true }),
           Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true }),
         ]),
       ])
@@ -91,7 +99,7 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
             useNativeDriver: true,
           }),
           Animated.timing(markerY, {
-            toValue: point.y * SCREEN_HEIGHT * 0.7,
+            toValue: point.y * SCREEN_HEIGHT * 0.65,
             duration: 2000,
             useNativeDriver: true,
           }),
@@ -113,19 +121,36 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
 
   const pulseScale = pulseAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 3],
+    outputRange: [1, 3.2],
   });
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
       {/* Map Background */}
-      <LinearGradient colors={['#080C2A', '#0D1245', '#0A0F35']} style={styles.mapBg}>
+      <LinearGradient colors={['#050714', '#0B0F30', '#070A20']} style={styles.mapBg}>
         {/* Grid lines for map feel */}
-        {[...Array(12)].map((_, i) => (
-          <View key={`h${i}`} style={[styles.gridLineH, { top: `${(i + 1) * 7.7}%` }]} />
+        {[...Array(14)].map((_, i) => (
+          <View key={`h${i}`} style={[styles.gridLineH, { top: `${(i + 1) * 7}%` }]} />
         ))}
-        {[...Array(8)].map((_, i) => (
-          <View key={`v${i}`} style={[styles.gridLineV, { left: `${(i + 1) * 12.5}%` }]} />
+        {[...Array(9)].map((_, i) => (
+          <View key={`v${i}`} style={[styles.gridLineV, { left: `${(i + 1) * 11.1}%` }]} />
+        ))}
+
+        {/* Ambient Glows around major geofence hotspots */}
+        {GEOFENCES.map((zone, idx) => (
+          <AmbientGlow
+            key={`glow-${idx}`}
+            color={zone.color}
+            size={zone.radius * 2.8}
+            intensity={0.06}
+            style={{
+              position: 'absolute',
+              left: zone.x * SCREEN_WIDTH - zone.radius * 1.4,
+              top: zone.y * SCREEN_HEIGHT * 0.65 - zone.radius * 1.4,
+            }}
+          />
         ))}
 
         {/* Geofence circles */}
@@ -136,16 +161,18 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
               styles.geofence,
               {
                 left: zone.x * SCREEN_WIDTH - zone.radius,
-                top: zone.y * SCREEN_HEIGHT * 0.7 - zone.radius,
+                top: zone.y * SCREEN_HEIGHT * 0.65 - zone.radius,
                 width: zone.radius * 2,
                 height: zone.radius * 2,
                 borderRadius: zone.radius,
-                backgroundColor: zone.color + '10',
-                borderColor: zone.color + '30',
+                backgroundColor: zone.color + '07',
+                borderColor: zone.color + '40',
               },
             ]}
           >
-            <Text style={[styles.geofenceLabel, { color: zone.color }]}>{zone.label}</Text>
+            <View style={[styles.geofenceBadge, { backgroundColor: zone.color + '15', borderColor: zone.color + '30' }]}>
+              <Text style={[styles.geofenceLabel, { color: zone.color }]}>{zone.label}</Text>
+            </View>
           </View>
         ))}
 
@@ -157,7 +184,7 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
             const speed = SPEEDS[idx];
             const segColor = speed > SPEED_LIMIT ? Colors.danger : speed > SPEED_LIMIT * 0.85 ? Colors.warning : Colors.safe;
             const dx = (point.x - prev.x) * SCREEN_WIDTH;
-            const dy = (point.y - prev.y) * SCREEN_HEIGHT * 0.7;
+            const dy = (point.y - prev.y) * SCREEN_HEIGHT * 0.65;
             const length = Math.sqrt(dx * dx + dy * dy);
             const angle = Math.atan2(dy, dx) * (180 / Math.PI);
             return (
@@ -167,10 +194,11 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
                   styles.routeSegment,
                   {
                     left: prev.x * SCREEN_WIDTH,
-                    top: prev.y * SCREEN_HEIGHT * 0.7,
+                    top: prev.y * SCREEN_HEIGHT * 0.65,
                     width: length,
-                    backgroundColor: segColor + '80',
+                    backgroundColor: segColor + '90',
                     transform: [{ rotate: `${angle}deg` }],
+                    ...Shadow.glowSoft(segColor),
                   },
                 ]}
               />
@@ -179,8 +207,8 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
         </Animated.View>
 
         {/* Start marker */}
-        <View style={[styles.startMarker, { left: ROUTE_POINTS[0].x * SCREEN_WIDTH - 8, top: ROUTE_POINTS[0].y * SCREEN_HEIGHT * 0.7 - 8 }]}>
-          <Ionicons name="flag" size={14} color={Colors.safe} />
+        <View style={[styles.startMarker, { left: ROUTE_POINTS[0].x * SCREEN_WIDTH - 10, top: ROUTE_POINTS[0].y * SCREEN_HEIGHT * 0.65 - 10 }]}>
+          <Ionicons name="flag" size={12} color={Colors.safe} />
         </View>
 
         {/* Animated vehicle marker */}
@@ -189,8 +217,8 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
             styles.markerContainer,
             {
               transform: [
-                { translateX: Animated.subtract(markerX, new Animated.Value(20)) },
-                { translateY: Animated.subtract(markerY, new Animated.Value(20)) },
+                { translateX: Animated.subtract(markerX, new Animated.Value(22)) },
+                { translateY: Animated.subtract(markerY, new Animated.Value(22)) },
               ],
             },
           ]}
@@ -200,7 +228,7 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
             style={[
               styles.markerPulse,
               {
-                backgroundColor: statusColor + '20',
+                backgroundColor: statusColor + '15',
                 borderColor: statusColor + '40',
                 transform: [{ scale: pulseScale }],
                 opacity: pulseOpacity,
@@ -208,86 +236,102 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
             ]}
           />
           {/* Vehicle */}
-          <View style={[styles.vehicleMarker, { backgroundColor: statusColor }, Shadow.glow(statusColor)]}>
-            <Ionicons name="bicycle" size={18} color="#fff" />
+          <View style={[styles.vehicleMarker, { backgroundColor: statusColor, borderColor: '#fff' }, Shadow.glowIntense(statusColor)]}>
+            <Ionicons name="bicycle" size={20} color="#fff" />
           </View>
         </Animated.View>
       </LinearGradient>
 
       {/* Top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.8}>
           <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
+        
         <View style={styles.topBarCenter}>
-          <View style={[styles.liveDot, { backgroundColor: statusColor }]} />
+          <View style={[styles.liveDot, { backgroundColor: statusColor }, Shadow.glow(statusColor)]} />
           <Text style={styles.liveText}>Live Tracking</Text>
         </View>
-        <TouchableOpacity onPress={() => setIsPaused(!isPaused)} style={styles.pauseBtn} activeOpacity={0.7}>
+
+        <TouchableOpacity onPress={() => setIsPaused(!isPaused)} style={styles.pauseBtn} activeOpacity={0.8}>
           <Ionicons name={isPaused ? 'play' : 'pause'} size={18} color={Colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
-      {/* Bottom info panel */}
-      <View style={styles.bottomPanel}>
-        {/* Speed indicator */}
-        <GlassCard style={[styles.speedCard, { borderColor: statusColor + '40' }]}>
-          <View style={styles.speedRow}>
-            <View style={styles.speedMain}>
-              <Text style={[styles.speedValue, { color: statusColor }]}>{Math.round(currentSpeed)}</Text>
-              <Text style={styles.speedUnit}>km/h</Text>
+      {/* Bottom info panel (Floating Spatial Panel) */}
+      <Animated.View style={[styles.bottomPanel, { opacity: panelFade }]}>
+        <BlurView intensity={50} tint="dark" style={styles.bottomPanelBlur}>
+          
+          {/* Speed indicator with premium details */}
+          <GlassCard style={[styles.speedCard, { borderColor: statusColor + '30', backgroundColor: 'rgba(255, 255, 255, 0.02)' }]}>
+            <View style={styles.speedRow}>
+              <View style={styles.speedMain}>
+                <Text style={[styles.speedValue, { color: statusColor }, Shadow.glowSoft(statusColor)]}>
+                  {Math.round(currentSpeed)}
+                </Text>
+                <Text style={styles.speedUnit}>km/h</Text>
+              </View>
+              <View style={styles.speedDivider} />
+              <View style={styles.speedLimitSection}>
+                <Text style={styles.limitLabel}>LIMIT</Text>
+                <View style={styles.limitBadge}>
+                  <Text style={styles.limitValue}>{SPEED_LIMIT}</Text>
+                </View>
+              </View>
             </View>
-            <View style={styles.speedDivider} />
-            <View style={styles.speedLimitSection}>
-              <Text style={styles.limitLabel}>LIMIT</Text>
-              <Text style={styles.limitValue}>{SPEED_LIMIT}</Text>
-            </View>
-          </View>
-          {isOverLimit && (
-            <View style={styles.warningBanner}>
-              <Ionicons name="warning" size={14} color={Colors.danger} />
-              <Text style={styles.warningText}>Speed limit exceeded!</Text>
-            </View>
-          )}
-        </GlassCard>
+            {isOverLimit && (
+              <View style={styles.warningBanner}>
+                <Ionicons name="warning" size={14} color={Colors.danger} />
+                <Text style={styles.warningText}>Speed limit exceeded!</Text>
+              </View>
+            )}
+          </GlassCard>
 
-        {/* Trip stats */}
-        <View style={styles.tripStats}>
-          <View style={styles.tripStat}>
-            <Ionicons name="time-outline" size={16} color={Colors.primaryLight} />
-            <Text style={styles.tripStatValue}>{minutes}:{seconds.toString().padStart(2, '0')}</Text>
-            <Text style={styles.tripStatLabel}>Duration</Text>
+          {/* Trip stats grid */}
+          <View style={styles.tripStats}>
+            <View style={styles.tripStat}>
+              <View style={[styles.statIconContainer, { backgroundColor: Colors.primary + '15' }]}>
+                <Ionicons name="time" size={16} color={Colors.primaryLight} />
+              </View>
+              <Text style={styles.tripStatValue}>{minutes}:{seconds.toString().padStart(2, '0')}</Text>
+              <Text style={styles.tripStatLabel}>Duration</Text>
+            </View>
+            <View style={styles.tripStatDivider} />
+            <View style={styles.tripStat}>
+              <View style={[styles.statIconContainer, { backgroundColor: Colors.safe + '15' }]}>
+                <Ionicons name="navigate" size={16} color={Colors.safeLight} />
+              </View>
+              <Text style={styles.tripStatValue}>{distance}</Text>
+              <Text style={styles.tripStatLabel}>km</Text>
+            </View>
+            <View style={styles.tripStatDivider} />
+            <View style={styles.tripStat}>
+              <View style={[styles.statIconContainer, { backgroundColor: (isOverLimit ? Colors.danger : Colors.safe) + '15' }]}>
+                <Ionicons name={isOverLimit ? 'warning' : 'shield-checkmark'} size={16} color={isOverLimit ? Colors.dangerLight : Colors.safeLight} />
+              </View>
+              <Text style={[styles.tripStatValue, { color: isOverLimit ? Colors.danger : Colors.safe }]}>
+                {isOverLimit ? 'ALERT' : 'SAFE'}
+              </Text>
+              <Text style={styles.tripStatLabel}>Status</Text>
+            </View>
           </View>
-          <View style={styles.tripStatDivider} />
-          <View style={styles.tripStat}>
-            <Ionicons name="navigate-outline" size={16} color={Colors.safe} />
-            <Text style={styles.tripStatValue}>{distance}</Text>
-            <Text style={styles.tripStatLabel}>km</Text>
-          </View>
-          <View style={styles.tripStatDivider} />
-          <View style={styles.tripStat}>
-            <Ionicons name="shield-checkmark-outline" size={16} color={isOverLimit ? Colors.danger : Colors.safe} />
-            <Text style={[styles.tripStatValue, { color: isOverLimit ? Colors.danger : Colors.safe }]}>
-              {isOverLimit ? 'Alert' : 'Safe'}
-            </Text>
-            <Text style={styles.tripStatLabel}>Status</Text>
-          </View>
-        </View>
 
-        {/* Rider info */}
-        <View style={styles.riderInfo}>
-          <LinearGradient colors={['#7C3AED', '#A855F7']} style={styles.riderAvatar}>
-            <Text style={styles.riderInitial}>A</Text>
-          </LinearGradient>
-          <View style={styles.riderDetails}>
-            <Text style={styles.riderName}>Alex Johnson</Text>
-            <Text style={styles.riderRoute}>Home → School</Text>
+          {/* Rider info */}
+          <View style={styles.riderInfo}>
+            <LinearGradient colors={['#7C3AED', '#A855F7']} style={styles.riderAvatar}>
+              <Text style={styles.riderInitial}>A</Text>
+            </LinearGradient>
+            <View style={styles.riderDetails}>
+              <Text style={styles.riderName}>Alex Johnson</Text>
+              <Text style={styles.riderRoute}>Home → School</Text>
+            </View>
+            <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
+              <Ionicons name="call" size={18} color={Colors.safe} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.callBtn} activeOpacity={0.7}>
-            <Ionicons name="call" size={18} color={Colors.safe} />
-          </TouchableOpacity>
-        </View>
-      </View>
+
+        </BlurView>
+      </Animated.View>
     </View>
   );
 };
@@ -295,8 +339,8 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgPrimary },
   mapBg: { flex: 1, position: 'relative', overflow: 'hidden' },
-  gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
-  gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
+  gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(108, 99, 255, 0.03)' },
+  gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(108, 99, 255, 0.03)' },
   geofence: {
     position: 'absolute',
     borderWidth: 1.5,
@@ -304,110 +348,124 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  geofenceLabel: { fontSize: 10, fontWeight: FontWeight.semibold },
+  geofenceBadge: {
+    paddingHorizontal: scaleWidth(10),
+    paddingVertical: scaleHeight(4),
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+  },
+  geofenceLabel: { fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5 },
   trailContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   routeSegment: {
     position: 'absolute',
-    height: 3,
-    borderRadius: 1.5,
+    height: 3.5,
+    borderRadius: 2,
     transformOrigin: 'left center',
   },
   startMarker: {
     position: 'absolute',
-    width: scaleWidth(20),
-    height: scaleWidth(20),
-    borderRadius: scaleWidth(10),
-    backgroundColor: Colors.safe + '20',
+    width: scaleWidth(24),
+    height: scaleWidth(24),
+    borderRadius: scaleWidth(12),
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.safe + '40',
+    borderWidth: 1.5,
+    borderColor: Colors.safe + '60',
   },
   markerContainer: {
     position: 'absolute',
-    width: scaleWidth(40),
-    height: scaleWidth(40),
+    width: scaleWidth(44),
+    height: scaleWidth(44),
     justifyContent: 'center',
     alignItems: 'center',
   },
   markerPulse: {
     position: 'absolute',
-    width: scaleWidth(40),
-    height: scaleWidth(40),
-    borderRadius: scaleWidth(20),
+    width: scaleWidth(44),
+    height: scaleWidth(44),
+    borderRadius: scaleWidth(22),
     borderWidth: 1.5,
   },
   vehicleMarker: {
-    width: scaleWidth(36),
-    height: scaleWidth(36),
-    borderRadius: scaleWidth(18),
+    width: scaleWidth(38),
+    height: scaleWidth(38),
+    borderRadius: scaleWidth(19),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
   },
   topBar: {
     position: 'absolute',
-    top: scaleHeight(50),
-    left: Spacing.xl,
-    right: Spacing.xl,
+    top: scaleHeight(55),
+    left: Spacing.lg,
+    right: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    zIndex: 10,
   },
   backBtn: {
-    width: scaleWidth(42),
-    height: scaleWidth(42),
-    borderRadius: scaleWidth(14),
-    backgroundColor: 'rgba(6, 8, 26, 0.8)',
+    width: scaleWidth(44),
+    height: scaleWidth(44),
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(10, 14, 42, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.2,
+    borderColor: Colors.borderMedium,
+    ...Shadow.sm,
   },
   topBarCenter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(6, 8, 26, 0.8)',
+    gap: 8,
+    backgroundColor: 'rgba(10, 14, 42, 0.75)',
     borderRadius: BorderRadius.round,
-    paddingHorizontal: scaleWidth(14),
+    paddingHorizontal: scaleWidth(16),
     paddingVertical: scaleHeight(8),
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.2,
+    borderColor: Colors.borderMedium,
+    ...Shadow.sm,
   },
   liveDot: {
     width: scaleWidth(8),
     height: scaleWidth(8),
     borderRadius: scaleWidth(4),
   },
-  liveText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  liveText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: FontWeight.bold, letterSpacing: 0.5 },
   pauseBtn: {
-    width: scaleWidth(42),
-    height: scaleWidth(42),
-    borderRadius: scaleWidth(14),
-    backgroundColor: 'rgba(6, 8, 26, 0.8)',
+    width: scaleWidth(44),
+    height: scaleWidth(44),
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(10, 14, 42, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.2,
+    borderColor: Colors.borderMedium,
+    ...Shadow.sm,
   },
   bottomPanel: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(6, 8, 26, 0.95)',
-    borderTopLeftRadius: BorderRadius.xxl,
-    borderTopRightRadius: BorderRadius.xxl,
+    bottom: getSafeAreaBottom() + scaleHeight(12),
+    left: Spacing.lg,
+    right: Spacing.lg,
+    borderRadius: BorderRadius.xxl,
+    borderWidth: 1.5,
+    borderColor: Colors.borderMedium,
+    overflow: 'hidden',
+    ...Shadow.lg,
+  },
+  bottomPanelBlur: {
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl,
-    paddingBottom: scaleHeight(40),
-    borderTopWidth: 1,
-    borderColor: Colors.border,
+    paddingBottom: Spacing.xl,
+    backgroundColor: 'rgba(5, 7, 20, 0.85)',
   },
   speedCard: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
   },
   speedRow: {
     flexDirection: 'row',
@@ -420,32 +478,41 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   speedValue: {
-    fontSize: FontSize.hero,
+    fontSize: scaleFont(44),
     fontWeight: FontWeight.heavy,
-    letterSpacing: -2,
+    letterSpacing: -1.5,
   },
   speedUnit: {
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
     color: Colors.textTertiary,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.semibold,
   },
   speedDivider: {
     width: 1,
-    height: scaleHeight(40),
+    height: scaleHeight(36),
     backgroundColor: Colors.border,
-    marginHorizontal: Spacing.lg,
+    marginHorizontal: Spacing.md,
   },
   speedLimitSection: {
     alignItems: 'center',
+    gap: 2,
   },
   limitLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: Colors.textTertiary,
-    fontWeight: FontWeight.semibold,
-    letterSpacing: 1,
+    fontWeight: FontWeight.heavy,
+    letterSpacing: 1.2,
+  },
+  limitBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: BorderRadius.xs,
+    paddingHorizontal: scaleWidth(10),
+    paddingVertical: scaleHeight(2),
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   limitValue: {
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.md,
     color: Colors.textSecondary,
     fontWeight: FontWeight.bold,
   },
@@ -453,24 +520,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.danger + '15',
-    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.danger + '12',
+    borderRadius: BorderRadius.xs,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     marginTop: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.danger + '25',
   },
   warningText: {
-    color: Colors.danger,
-    fontSize: FontSize.sm,
+    color: Colors.dangerLight,
+    fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
   },
   tripStats: {
     flexDirection: 'row',
-    backgroundColor: Colors.bgCard,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: Spacing.lg,
+    borderColor: Colors.borderLight,
+    paddingVertical: Spacing.md,
     marginBottom: Spacing.lg,
   },
   tripStat: {
@@ -478,8 +547,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
+  statIconContainer: {
+    width: scaleWidth(28),
+    height: scaleWidth(28),
+    borderRadius: BorderRadius.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   tripStatValue: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
@@ -490,8 +567,9 @@ const styles = StyleSheet.create({
   },
   tripStatDivider: {
     width: 1,
-    height: '100%',
-    backgroundColor: Colors.border,
+    height: '70%',
+    alignSelf: 'center',
+    backgroundColor: Colors.borderLight,
   },
   riderInfo: {
     flexDirection: 'row',
@@ -499,24 +577,25 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   riderAvatar: {
-    width: scaleWidth(40),
-    height: scaleWidth(40),
-    borderRadius: scaleWidth(12),
+    width: scaleWidth(42),
+    height: scaleWidth(42),
+    borderRadius: BorderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Shadow.glowSoft('#7C3AED'),
   },
   riderInitial: { color: '#fff', fontSize: FontSize.md, fontWeight: FontWeight.bold },
   riderDetails: { flex: 1 },
   riderName: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textPrimary },
   riderRoute: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 1 },
   callBtn: {
-    width: scaleWidth(40),
-    height: scaleWidth(40),
-    borderRadius: scaleWidth(12),
+    width: scaleWidth(42),
+    height: scaleWidth(42),
+    borderRadius: BorderRadius.md,
     backgroundColor: Colors.safe + '15',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.2,
     borderColor: Colors.safe + '30',
   },
 });
