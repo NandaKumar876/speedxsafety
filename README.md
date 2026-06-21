@@ -5,8 +5,7 @@ SpeedxSafety is a premium, real-time safety monitoring mobile application design
 ## Project Structure
 
 This project is built using a clean, modern, and decoupled architecture. For detailed design decisions, please refer to [ARCHITECTURE.md](./ARCHITECTURE.md):
-
-- **/frontend** - React Native (Expo) mobile application. Built using a modern **Electric Blue / Violet** dark theme, responsive grids, and standard **Inter** typography.
+**/frontend** - React Native (Expo) mobile application. Built using a modern **Electric Blue / Violet** dark theme, responsive grids, and standard **Inter** typography.
 - **/backend** - Contains the database setup and SQL scripts for migration.
 
 ---
