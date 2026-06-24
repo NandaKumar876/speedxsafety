@@ -43,10 +43,6 @@ app.use(requestLogger);
 app.use(supabaseSessionMiddleware);
 
 // ── Health Check ─────────────────────────────
-app.get('/', (_req, res) => {
-  res.json({ message: 'SpeedxSafety Backend is running' });
-});
-
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'healthy',
