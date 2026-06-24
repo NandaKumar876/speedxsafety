@@ -13,6 +13,7 @@ import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
 import { UserRole } from '../../types';
+import { signUp } from '../../services/authService';
 
 export const RegisterScreen = ({ navigation }: any) => {
   const [role, setRole] = useState<UserRole | null>(null);
@@ -47,12 +48,20 @@ export const RegisterScreen = ({ navigation }: any) => {
     }
   }, [role]);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
+    if (!role || !email || !password || !name) {
+      alert('Please fill all required fields');
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await signUp(email, password, role, name);
       setLoading(false);
       navigation.replace(role === 'parent' ? 'ParentTabs' : 'TeenTabs');
-    }, 1500);
+    } catch (err: any) {
+      setLoading(false);
+      alert(err.message || 'Registration failed. Please try again.');
+    }
   };
 
   const RoleOption = ({ value, icon, label, desc, gradient, glowColor }: any) => {
@@ -199,7 +208,7 @@ export const RegisterScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xxl, paddingTop: getSafeAreaTop() + 16, paddingBottom: Spacing.huge },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xxl, paddingTop: getSafeAreaTop() + 16, paddingBottom: Spacing.huge, alignSelf: 'center', width: '100%', maxWidth: 460 },
   backBtn: { width: scaleWidth(42), height: scaleWidth(42), borderRadius: scaleWidth(14), backgroundColor: Colors.bgCard, justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.xxl, borderWidth: 1, borderColor: Colors.border, ...Shadow.sm },
   title: { fontSize: FontSize.xxxl, fontWeight: FontWeight.heavy, color: Colors.textPrimary, marginBottom: Spacing.sm, letterSpacing: -1 },
   subtitle: { fontSize: FontSize.md, color: Colors.textTertiary, marginBottom: Spacing.xxxl, lineHeight: 22 },
