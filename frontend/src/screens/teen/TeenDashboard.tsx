@@ -12,12 +12,16 @@ import { GlassCard, StatCard, StatusBadge } from '../../components/common';
 import { FloatingOrbs, PulseRing } from '../../components/common/SpatialComponents';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
-import { mockTeens, mockTrips } from '../../data/mockData';
-import { Trip } from '../../types';
-import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
+import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop, useResponsive } from '../../utils/responsive';
+import { getCurrentUser } from '../../services/authService';
+import { getTrips } from '../../services/dataService';
+import { supabase } from '../../services/supabase';
+import { ActivityIndicator } from 'react-native';
 
 export const TeenDashboard = ({ navigation }: any) => {
-  const teen = mockTeens[0];
+  const [teen, setTeen] = useState<any>(null);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
   const [speed, setSpeed] = useState(0);
   const [isDriving, setIsDriving] = useState(false);
   const sosPulse = useRef(new Animated.Value(1)).current;
@@ -30,6 +34,49 @@ export const TeenDashboard = ({ navigation }: any) => {
       Animated.timing(headerFade, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
       Animated.spring(headerSlide, { toValue: 0, ...Springs.gentle }),
     ]).start();
+
+    const loadTeenData = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          let { data: teenData } = await supabase
+            .from('teens')
+            .select('*')
+            .eq('user_uid', currentUser.id)
+            .maybeSingle();
+
+          if (!teenData) {
+            const { data: newTeen } = await supabase
+              .from('teens')
+              .insert({
+                user_uid: currentUser.id,
+                name: currentUser.profile?.name || currentUser.user_metadata?.full_name || 'Teen Rider',
+                speed_limit: 80,
+                curfew_start: '22:00',
+                curfew_end: '06:00',
+                safety_score: 100,
+                is_driving: false,
+                streak_days: 0
+              })
+              .select()
+              .single();
+            teenData = newTeen;
+          }
+
+          if (teenData) {
+            setTeen(teenData);
+            const recentTrips = await getTrips(teenData.teen_id);
+            setTrips(recentTrips);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load teen dashboard:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTeenData();
   }, []);
 
   // Animate speed for demo
@@ -56,6 +103,14 @@ export const TeenDashboard = ({ navigation }: any) => {
       ])
     ).start();
   }, []);
+
+  if (loading || !teen) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
 
   const isOverLimit = speed > teen.speed_limit;
   const tripDuration = isDriving ? '12:34' : '00:00';
@@ -171,7 +226,7 @@ export const TeenDashboard = ({ navigation }: any) => {
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
-          {mockTrips.slice(0, 2).map((trip: Trip, idx: number) => (
+          {trips.slice(0, 2).map((trip: Trip, idx: number) => (
             <GlassCard key={trip.trip_id} style={styles.tripCard} animated delay={idx * 100}>
               <View style={styles.tripRow}>
                 <View style={styles.tripInfo}>
@@ -207,6 +262,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: getSafeAreaTop() + 12,
     paddingBottom: scaleHeight(120),
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 800,
   },
   header: {
     flexDirection: 'row',
