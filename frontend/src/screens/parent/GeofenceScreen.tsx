@@ -8,17 +8,51 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, GradientButton } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { mockGeofences } from '../../data/mockData';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
+import { getCurrentUser } from '../../services/authService';
+import { getGeofences, updateGeofence } from '../../services/dataService';
+import { ActivityIndicator } from 'react-native';
+import { Geofence } from '../../types';
 
 export const GeofenceScreen = () => {
-  const [geofences, setGeofences] = useState(mockGeofences);
+  const [geofences, setGeofences] = useState<Geofence[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const toggleFence = (id: string) => {
-    setGeofences(prev => prev.map(g =>
-      g.zone_id === id ? { ...g, is_active: !g.is_active } : g
-    ));
+  React.useEffect(() => {
+    const loadGeofences = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const fetched = await getGeofences(user.id);
+          setGeofences(fetched);
+        }
+      } catch (err) {
+        console.warn('Failed to load geofences:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadGeofences();
+  }, []);
+
+  const toggleFence = async (id: string, currentStatus: boolean) => {
+    try {
+      await updateGeofence(id, { is_active: !currentStatus });
+      setGeofences(prev => prev.map(g =>
+        g.zone_id === id ? { ...g, is_active: !currentStatus } : g
+      ));
+    } catch (err) {
+      console.warn('Failed to toggle geofence:', err);
+    }
   };
+
+  if (loading) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
@@ -90,7 +124,7 @@ export const GeofenceScreen = () => {
               </View>
               <Switch
                 value={fence.is_active}
-                onValueChange={() => toggleFence(fence.zone_id)}
+                onValueChange={() => toggleFence(fence.zone_id, fence.is_active)}
                 trackColor={{ false: '#20264E', true: fence.color + '50' }}
                 thumbColor={fence.is_active ? fence.color : '#606A93'}
               />
@@ -131,7 +165,7 @@ export const GeofenceScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120) },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, letterSpacing: -0.5 },
   subtitle: { fontSize: FontSize.sm, color: Colors.textTertiary, marginTop: 4, marginBottom: Spacing.xxl },
   mapCard: { padding: 0, overflow: 'hidden', marginBottom: Spacing.xxl },
