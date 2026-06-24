@@ -9,20 +9,50 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
-import { mockAlerts } from '../../data/mockData';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
+import { getCurrentUser } from '../../services/authService';
+import { getAlerts } from '../../services/dataService';
+import { Alert } from '../../types';
+import { ActivityIndicator } from 'react-native';
 
 const alertTypes = ['All', 'speed', 'geo', 'crash', 'curfew', 'sos'] as const;
 
 export const AlertHistoryScreen = () => {
   const [filter, setFilter] = useState<string>('All');
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = filter === 'All' ? mockAlerts : mockAlerts.filter(a => a.type === filter);
+  useEffect(() => {
+    const loadAlerts = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const fetched = await getAlerts(user.id);
+          setAlerts(fetched);
+        }
+      } catch (err) {
+        console.warn('Failed to load alerts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAlerts();
+  }, []);
+
+  if (loading) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
+
+  const filtered = filter === 'All' ? alerts : alerts.filter(a => a.type === filter);
   const stats = {
-    total: mockAlerts.length,
-    speed: mockAlerts.filter(a => a.type === 'speed').length,
-    critical: mockAlerts.filter(a => ['crash', 'sos'].includes(a.type)).length,
-    unread: mockAlerts.filter(a => !a.read).length,
+    total: alerts.length,
+    speed: alerts.filter(a => a.type === 'speed').length,
+    critical: alerts.filter(a => ['crash', 'sos'].includes(a.type)).length,
+    unread: alerts.filter(a => !a.read).length,
   };
 
   return (
@@ -125,7 +155,7 @@ const getTimeAgo = (ts: number): string => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120) },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.xxl, letterSpacing: -0.5 },
   statsRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xl },
   statCard: { flex: 1, alignItems: 'center', padding: Spacing.md },
