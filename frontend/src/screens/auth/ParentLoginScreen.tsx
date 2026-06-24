@@ -12,7 +12,7 @@ import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../
 import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
-import { signInWithGoogleSimulated } from '../../services/authService';
+import { signInWithGoogle } from '../../services/authService';
 
 export const ParentLoginScreen = ({ navigation, route }: any) => {
   const isAdmin = route?.params?.isAdmin;
@@ -86,35 +86,14 @@ export const ParentLoginScreen = ({ navigation, route }: any) => {
     }, 1200);
   };
 
-  const handleGoogleLoginPress = () => {
-    setGoogleEmail('');
-    setGoogleName('');
-    setGoogleError('');
-    setGoogleModalVisible(true);
-  };
-
-  const submitGoogleLogin = async () => {
-    setGoogleError('');
-    if (!googleEmail.trim() || !googleName.trim()) {
-      setGoogleError('Both Google Email and Full Name are required');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(googleEmail.trim())) {
-      setGoogleError('Please enter a valid Google email address');
-      return;
-    }
-
+  const handleGoogleLoginPress = async () => {
+    setErrorMsg('');
     setLoading(true);
     try {
-      await signInWithGoogleSimulated(googleEmail.trim(), googleName.trim(), 'parent');
-      setLoading(false);
-      setGoogleModalVisible(false);
-      navigation.replace('ParentTabs');
+      await signInWithGoogle(isAdmin ? 'admin' : 'parent');
     } catch (err: any) {
       setLoading(false);
-      setGoogleError(err.message || 'Google Sign-In failed. Please try again.');
+      setErrorMsg(err.message || 'Google Sign-In failed. Please try again.');
     }
   };
 
@@ -247,7 +226,7 @@ export const ParentLoginScreen = ({ navigation, route }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.xxl, paddingVertical: Spacing.xl },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.xxl, paddingVertical: Spacing.xl, alignSelf: 'center', width: '100%', maxWidth: 460 },
   backBtn: { position: 'absolute', top: getSafeAreaTop() + 8, left: 0, width: scaleWidth(42), height: scaleWidth(42), borderRadius: scaleWidth(14), backgroundColor: Colors.bgCard, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: Colors.border, zIndex: 10, ...Shadow.sm },
   headerSection: { alignItems: 'center', marginBottom: Spacing.huge },
   iconOuter: { padding: 3, borderRadius: scaleWidth(26), backgroundColor: 'rgba(108, 99, 255, 0.12)', marginBottom: Spacing.lg },
