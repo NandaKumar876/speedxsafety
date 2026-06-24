@@ -12,7 +12,7 @@ import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 import { GlassInput, GlassCard } from '../../components/common';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
-import { signInWithGoogleSimulated } from '../../services/authService';
+import { signInWithGoogle } from '../../services/authService';
 
 export const TeenLoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
@@ -72,35 +72,14 @@ export const TeenLoginScreen = ({ navigation }: any) => {
     outputRange: [0, -6],
   });
 
-  const handleGoogleLoginPress = () => {
-    setGoogleEmail('');
-    setGoogleName('');
-    setGoogleError('');
-    setGoogleModalVisible(true);
-  };
-
-  const submitGoogleLogin = async () => {
-    setGoogleError('');
-    if (!googleEmail.trim() || !googleName.trim()) {
-      setGoogleError('Both Google Email and Full Name are required');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(googleEmail.trim())) {
-      setGoogleError('Please enter a valid Google email address');
-      return;
-    }
-
+  const handleGoogleLoginPress = async () => {
     setLoading(true);
     try {
-      await signInWithGoogleSimulated(googleEmail.trim(), googleName.trim(), 'teen');
-      setLoading(false);
-      setGoogleModalVisible(false);
-      navigation.replace('TeenTabs');
+      await signInWithGoogle('teen');
     } catch (err: any) {
       setLoading(false);
-      setGoogleError(err.message || 'Google Sign-In failed. Please try again.');
+      // Display the error using an alert or state variable (e.g. setGoogleError)
+      console.warn('Google login failed:', err);
     }
   };
 
@@ -269,6 +248,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Spacing.xxl,
     paddingVertical: Spacing.xl,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 460,
   },
   backBtn: {
     position: 'absolute',
