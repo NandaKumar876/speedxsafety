@@ -8,12 +8,52 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { mockBadges, mockTeens } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
+import { getCurrentUser } from '../../services/authService';
+import { getBadges } from '../../services/dataService';
+import { supabase } from '../../services/supabase';
+import { ActivityIndicator } from 'react-native';
 
 export const BadgesScreen = () => {
-  const teen = mockTeens[0];
-  const earnedCount = mockBadges.filter(b => b.earned).length;
+  const [teen, setTeen] = useState<any>(null);
+  const [badges, setBadges] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const { data: teenData } = await supabase
+            .from('teens')
+            .select('*')
+            .eq('user_uid', user.id)
+            .maybeSingle();
+
+          if (teenData) {
+            setTeen(teenData);
+            const fetched = await getBadges(teenData.teen_id);
+            setBadges(fetched);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load badges:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading || !teen) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
+
+  const earnedCount = badges.filter(b => b.earned).length;
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
@@ -53,7 +93,7 @@ export const BadgesScreen = () => {
           </GlassCard>
           <GlassCard style={styles.statItem} elevation="raised">
             <Text style={styles.statEmoji}>🎯</Text>
-            <Text style={styles.statValue}>{mockBadges.length - earnedCount}</Text>
+            <Text style={styles.statValue}>{badges.length - earnedCount}</Text>
             <Text style={styles.statLabel}>Remaining</Text>
           </GlassCard>
           <GlassCard style={styles.statItem} elevation="raised">
@@ -66,7 +106,7 @@ export const BadgesScreen = () => {
         {/* Badge Grid */}
         <Text style={styles.sectionTitle}>All Badges</Text>
         <View style={styles.badgeGrid}>
-          {mockBadges.map((badge, idx) => (
+          {badges.map((badge, idx) => (
             <GlassCard
               key={badge.id}
               style={[
@@ -116,7 +156,7 @@ export const BadgesScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120) },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.xxl, letterSpacing: -0.5 },
   streakCard: { marginBottom: Spacing.xxl, padding: Spacing.xl },
   streakTopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg, marginBottom: Spacing.lg },
