@@ -2,14 +2,14 @@
 // SpeedxSafety - Admin Alerts Screen (Spatial Edition)
 // ============================================
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { mockAlerts } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { getAlerts, markAllAlertsRead } from '../../services/dataService';
 import { AmbientGlow } from '../../components/common/SpatialComponents';
 
 type AlertFilter = 'all' | 'speed' | 'geo' | 'crash' | 'curfew';
@@ -38,12 +38,35 @@ const getAlertColor = (type: string): string => {
 
 export const AdminAlertsScreen = () => {
   const [filter, setFilter] = useState<AlertFilter>('all');
-  const [alerts, setAlerts] = useState(mockAlerts);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadAlerts = async () => {
+    try {
+      setLoading(true);
+      const data = await getAlerts('');
+      setAlerts(data);
+    } catch (error) {
+      console.error('Failed to load admin alerts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAlerts();
+  }, []);
 
   const filtered = filter === 'all' ? alerts : alerts.filter(a => a.type === filter);
 
-  const markAllReviewed = () => {
-    setAlerts(prev => prev.map(a => ({ ...a, read: true })));
+  const markAllReviewed = async () => {
+    try {
+      await markAllAlertsRead('');
+      const data = await getAlerts('');
+      setAlerts(data);
+    } catch (error) {
+      console.error('Failed to mark all alerts as read:', error);
+    }
   };
 
   const filters: { key: AlertFilter; label: string; icon: string }[] = [
@@ -53,6 +76,14 @@ export const AdminAlertsScreen = () => {
     { key: 'crash', label: 'Crash', icon: 'alert-circle' },
     { key: 'curfew', label: 'Curfew', icon: 'moon' },
   ];
+
+  if (loading) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
@@ -186,7 +217,10 @@ const styles = StyleSheet.create({
   scrollContent: { 
     paddingHorizontal: Spacing.xl, 
     paddingTop: scaleHeight(55), 
-    paddingBottom: scaleHeight(110) 
+    paddingBottom: scaleHeight(110),
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 800,
   },
   headerRow: { 
     flexDirection: 'row', 
