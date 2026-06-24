@@ -61,32 +61,79 @@ export const signOut = async () => {
   if (error) throw error;
 };
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 /**
- * Simulated Google Sign-In helper that registers the user if they don't exist,
- * and signs them in if they do, using a standard dummy password behind the scenes.
+ * Real Google Sign-In helper using Supabase OAuth redirect.
+ * Saves the selected role in AsyncStorage before redirecting.
  */
-export const signInWithGoogleSimulated = async (email: string, name: string, role: UserRole) => {
-  const dummyPassword = 'GoogleUserDummyPassword123!';
-  try {
-    // Attempt login
-    const data = await signIn(email.toLowerCase(), dummyPassword);
-    return data;
-  } catch (error: any) {
-    // If not found or invalid credentials (meaning user hasn't registered yet), register them
-    const errMessage = error.message || '';
-    if (
-      errMessage.includes('Invalid login credentials') ||
-      errMessage.includes('Email not confirmed') ||
-      error.status === 400 ||
-      error.status === 401
-    ) {
-      const signUpData = await signUp(email.toLowerCase(), dummyPassword, role, name);
-      return signUpData;
-    }
-    throw error;
-  }
+export const signInWithGoogle = async (role: UserRole) => {
+  await AsyncStorage.setItem('pending_google_role', role);
+
+  // In React Native Web, window.location is defined
+  const redirectTo = typeof window !== 'undefined' && window.location
+    ? window.location.origin
+    : 'speedxsafety://';
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo,
+    },
+  });
+
+  if (error) throw error;
+  return data;
 };
 
+/**
+ * Synchronize the user profile role if it was a new Google OAuth sign-in.
+ */
+export const syncGoogleProfile = async (user: any) => {
+  if (!user) return null;
+  try {
+    const pendingRole = await AsyncStorage.getItem('pending_google_role');
+    if (pendingRole) {
+      await AsyncStorage.removeItem('pending_google_role');
+
+      // Check if profile exists and update/insert
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        if (profile.role !== pendingRole) {
+          const { data: updatedProfile } = await supabase
+            .from('profiles')
+            .update({ role: pendingRole })
+            .eq('id', user.id)
+            .select()
+            .single();
+          return updatedProfile;
+        }
+        return profile;
+      } else {
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            name: user.user_metadata?.full_name || user.user_metadata?.name || 'User',
+            role: pendingRole,
+            is_active: true,
+          })
+          .select()
+          .single();
+        return newProfile;
+      }
+    }
+  } catch (err) {
+    console.warn('Error syncing Google profile:', err);
+  }
+  return null;
+};
 
 /**
  * Send password reset email
@@ -101,8 +148,10 @@ export const resetPassword = async (email: string) => {
  */
 export const getCurrentUser = async () => {
   const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  if (!user) return null;
+  if (error || !user) return null;
+
+  // Sync profile if redirection returned
+  await syncGoogleProfile(user);
 
   // Get profile with role
   const { data: profile } = await supabase
