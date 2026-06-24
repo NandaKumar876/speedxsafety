@@ -9,9 +9,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { Springs } from '../../constants/spatial';
-import { mockTrips } from '../../data/mockData';
-import { Trip } from '../../types';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
+import { getCurrentUser } from '../../services/authService';
+import { getTrips } from '../../services/dataService';
+import { supabase } from '../../services/supabase';
+import { ActivityIndicator } from 'react-native';
 import { useRef } from 'react';
 
 const gradeColor = (g: string) =>
@@ -26,9 +28,43 @@ const formatDuration = (start: number, end?: number) => {
 
 export const TripHistoryScreen = () => {
   const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const trips = mockTrips;
-  const totalDistance = trips.reduce((s: number, t: Trip) => s + t.distance_km, 0).toFixed(1);
+  useEffect(() => {
+    const loadTrips = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const { data: teen } = await supabase
+            .from('teens')
+            .select('teen_id')
+            .eq('user_uid', user.id)
+            .maybeSingle();
+
+          if (teen) {
+            const fetched = await getTrips(teen.teen_id);
+            setTrips(fetched);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load trips:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTrips();
+  }, []);
+
+  if (loading) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
+
+  const totalDistance = trips.reduce((s: number, t: Trip) => s + (t.distance_km || 0), 0).toFixed(1);
   const totalTrips = trips.length;
   const avgScore = trips.filter((t: Trip) => t.safety_grade === 'A' || t.safety_grade === 'B').length;
 
@@ -138,7 +174,7 @@ export const TripHistoryScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120) },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.xxl, letterSpacing: -0.5 },
   summaryRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xxl },
   summaryCard: { flex: 1, alignItems: 'center', padding: Spacing.md },
