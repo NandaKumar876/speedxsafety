@@ -75,6 +75,18 @@ app.use('/api/geofences', apiLimiter, geofencesRoutes);     // standard: 100 req
 app.use('/api/badges', apiLimiter, badgesRoutes);           // standard: 100 req/min
 app.use('/api/reports', apiLimiter, reportsRoutes);         // standard: 100 req/min
 
+// ── Serve Frontend Static Files ──────────────
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../public')));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(__dirname, '../public/index.html'), (err) => {
+    if (err) {
+      next();
+    }
+  });
+});
+
 // ── Error Handling ───────────────────────────
 app.use(notFoundHandler);
 app.use(errorHandler);
