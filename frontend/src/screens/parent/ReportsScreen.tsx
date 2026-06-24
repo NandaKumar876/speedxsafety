@@ -8,24 +8,74 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect, Circle as SvgCircle, Polyline } from 'react-native-svg';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow, getGradeColor } from '../../constants/theme';
-import { mockWeeklyReport, mockTeens } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
+import { getCurrentUser } from '../../services/authService';
+import { getWeeklyReport, getTeens } from '../../services/dataService';
+import { ActivityIndicator } from 'react-native';
 
 const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 export const ReportsScreen = () => {
-  const r = mockWeeklyReport;
-  const gc = getGradeColor(r.safety_grade);
+  const [report, setReport] = useState<any>(null);
+  const [teen, setTeen] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { width } = useWindowDimensions();
+  const [useStateTag] = React.useState(true); // to ensure useState is active
 
-  const chartWidth = Math.max(260, width - Spacing.xl * 2 - Spacing.lg * 2 - 10);
+  React.useEffect(() => {
+    const loadReportData = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const riders = await getTeens(user.id);
+          if (riders && riders.length > 0) {
+            const firstTeen = riders[0];
+            setTeen(firstTeen);
+            const weeklyRep = await getWeeklyReport(firstTeen.teen_id);
+            setReport(weeklyRep || {
+              teen_id: firstTeen.teen_id,
+              week_start: Date.now() - 7 * 24 * 60 * 60 * 1000,
+              week_end: Date.now(),
+              total_trips: 0,
+              total_distance: 0,
+              avg_speed: 0,
+              violations: 0,
+              max_speed: 0,
+              safety_grade: 'A',
+              daily_trips: [0, 0, 0, 0, 0, 0, 0],
+              score_trend: [100, 100, 100, 100, 100, 100, 100]
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load report data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadReportData();
+  }, []);
+
+  if (loading || !report || !teen) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
+
+  const r = report;
+  const gc = getGradeColor(r.safety_grade);
+  const maxW = 800; // Limit web chart size
+  const actualWidth = Math.min(width, maxW);
+  const chartWidth = Math.max(260, actualWidth - Spacing.xl * 2 - Spacing.lg * 2 - 10);
   const chartHeight = scaleHeight(120);
   const maxT = Math.max(...r.daily_trips, 1);
-  const bw = (chartWidth/7)*0.6, bg = (chartWidth/7)*0.4;
+  const bw = (chartWidth / 7) * 0.6, bg = (chartWidth / 7) * 0.4;
   const sMin = Math.min(...r.score_trend), sMax = Math.max(...r.score_trend);
   const sR = sMax - sMin || 1;
-  const tp = r.score_trend.map((s,i) =>
-    `${(i/(r.score_trend.length-1))*chartWidth},${chartHeight-((s-sMin)/sR)*(chartHeight-20)}`
+  const tp = r.score_trend.map((s: number, i: number) =>
+    `${(i / (r.score_trend.length - 1)) * chartWidth},${chartHeight - ((s - sMin) / sR) * (chartHeight - 20)}`
   ).join(' ');
 
   return (
@@ -111,7 +161,7 @@ export const ReportsScreen = () => {
             <View style={{flex:1}}>
               <Text style={styles.noteLbl}>Peak Speed This Week</Text>
               <Text style={[styles.noteVal,{color:Colors.danger}]}>{r.max_speed} km/h</Text>
-              <Text style={styles.noteSub}>Limit: {mockTeens[0].speed_limit} km/h</Text>
+              <Text style={styles.noteSub}>Limit: {teen.speed_limit} km/h</Text>
             </View>
           </View>
         </GlassCard>
@@ -121,7 +171,7 @@ export const ReportsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  sc:{paddingHorizontal:Spacing.xl,paddingTop:getSafeAreaTop() + 12,paddingBottom:scaleHeight(120)},
+  sc: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
   title:{fontSize:FontSize.xxl,fontWeight:FontWeight.bold,color:Colors.textPrimary, letterSpacing: -0.5},
   date:{fontSize:FontSize.sm,color:Colors.textTertiary,marginTop:4,marginBottom:Spacing.xxl},
   gradeCard:{marginBottom:Spacing.xxl,padding:Spacing.xl},
