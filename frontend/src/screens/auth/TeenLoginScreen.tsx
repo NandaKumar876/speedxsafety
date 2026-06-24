@@ -18,18 +18,10 @@ export const TeenLoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const { height } = useWindowDimensions();
 
-  // Google Login States
-  const [googleModalVisible, setGoogleModalVisible] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
-  const [googleError, setGoogleError] = useState('');
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const badgePulse = useRef(new Animated.Value(1)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
-  const modalScale = useRef(new Animated.Value(0.9)).current;
-  const modalOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -54,18 +46,7 @@ export const TeenLoginScreen = ({ navigation }: any) => {
     ).start();
   }, []);
 
-  // Modal animation
-  useEffect(() => {
-    if (googleModalVisible) {
-      Animated.parallel([
-        Animated.spring(modalScale, { toValue: 1, ...Springs.gentle }),
-        Animated.timing(modalOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
-      ]).start();
-    } else {
-      modalScale.setValue(0.9);
-      modalOpacity.setValue(0);
-    }
-  }, [googleModalVisible]);
+
 
   const floatTranslate = floatAnim.interpolate({
     inputRange: [0, 1],
@@ -159,84 +140,7 @@ export const TeenLoginScreen = ({ navigation }: any) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Google Login Modal — Spatial */}
-      <Modal
-        animationType="none"
-        transparent={true}
-        visible={googleModalVisible}
-        onRequestClose={() => setGoogleModalVisible(false)}
-      >
-        <Animated.View style={[styles.modalOverlay, { opacity: modalOpacity }]}>
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            onPress={() => { setGoogleModalVisible(false); setGoogleError(''); }}
-            activeOpacity={1}
-          />
-          <Animated.View style={[styles.modalCard, { transform: [{ scale: modalScale }] }, Shadow.xl]}>
-            <View style={styles.modalHighlight} />
-            <View style={styles.modalHeader}>
-              <View style={styles.modalGoogleIcon}>
-                <Ionicons name="logo-google" size={22} color="#EA4335" />
-              </View>
-              <Text style={styles.modalTitle}>Google Sign In</Text>
-            </View>
-            <Text style={styles.modalSubtitle}>
-              Authenticate with your Google Email and Full Name.
-            </Text>
 
-            <GlassInput
-              placeholder="Google Email Address"
-              value={googleEmail}
-              onChangeText={setGoogleEmail}
-              keyboardType="email-address"
-              icon={<Ionicons name="mail-outline" size={18} color={Colors.textTertiary} />}
-            />
-            <View style={{ height: Spacing.md }} />
-            <GlassInput
-              placeholder="Full Name"
-              value={googleName}
-              onChangeText={setGoogleName}
-              icon={<Ionicons name="person-outline" size={18} color={Colors.textTertiary} />}
-            />
-
-            {googleError ? (
-              <Text style={styles.modalError}>{googleError}</Text>
-            ) : null}
-
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalBtnCancel]}
-                onPress={() => {
-                  setGoogleModalVisible(false);
-                  setGoogleError('');
-                }}
-                disabled={loading}
-              >
-                <Text style={styles.modalBtnCancelText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalBtn]}
-                onPress={submitGoogleLogin}
-                disabled={loading}
-              >
-                <LinearGradient
-                  colors={Colors.gradientAccent as any}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.modalBtnConfirm}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.modalBtnConfirmText}>Continue</Text>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </Animated.View>
-      </Modal>
     </LinearGradient>
   );
 };
@@ -374,97 +278,4 @@ const styles = StyleSheet.create({
   footerText: { color: Colors.textTertiary, fontSize: FontSize.md },
   footerLink: { color: Colors.accentLight, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
 
-  // Modal — Spatial
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.xl,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: Colors.bgSurface,
-    borderRadius: BorderRadius.xxl,
-    borderWidth: 1.5,
-    borderColor: Colors.borderMedium,
-    padding: Spacing.xxl,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  modalHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 20,
-    right: 20,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  modalGoogleIcon: {
-    width: scaleWidth(40),
-    height: scaleWidth(40),
-    borderRadius: scaleWidth(12),
-    backgroundColor: 'rgba(234, 67, 53, 0.10)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
-  modalSubtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: Spacing.lg,
-  },
-  modalError: {
-    color: Colors.danger,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-    marginTop: Spacing.md,
-    textAlign: 'center',
-  },
-  modalBtnRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginTop: Spacing.xl,
-  },
-  modalBtn: {
-    flex: 1,
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-  },
-  modalBtnCancel: {
-    backgroundColor: Colors.bgCard,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBtnCancelText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-  },
-  modalBtnConfirm: {
-    height: 48,
-    borderRadius: BorderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBtnConfirmText: {
-    color: '#fff',
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-  },
 });
