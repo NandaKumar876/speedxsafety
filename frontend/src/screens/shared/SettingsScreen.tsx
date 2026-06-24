@@ -8,16 +8,47 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { mockTeens } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 import { AmbientGlow } from '../../components/common/SpatialComponents';
+import { getTeens } from '../../services/dataService';
+import { getCurrentUser, signOut } from '../../services/authService';
 
 export const SettingsScreen = ({ navigation }: any) => {
+  const [user, setUser] = useState<any>(null);
+  const [teens, setTeens] = useState<any[]>([]);
   const [speedLimit, setSpeedLimit] = useState(80);
   const [curfew, setCurfew] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [crashDetect, setCrashDetect] = useState(true);
   const [phoneDetect, setPhoneDetect] = useState(true);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          if (currentUser.role === 'parent') {
+            const fetchedTeens = await getTeens(currentUser.id);
+            setTeens(fetchedTeens);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load settings data:', err);
+      }
+    };
+    loadData();
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigation.replace('RoleSelect');
+    } catch (err) {
+      console.warn('Sign out failed:', err);
+      navigation.replace('RoleSelect');
+    }
+  };
 
   const SettingRow = ({ icon, iconColor, title, subtitle, right }: any) => (
     <View style={s.settingRow}>
@@ -49,11 +80,17 @@ export const SettingsScreen = ({ navigation }: any) => {
         {/* Profile Card */}
         <GlassCard style={s.profileCard} elevation="raised" glowColor={Colors.primary}>
           <LinearGradient colors={Colors.gradientPrimary as any} style={[s.avatar, Shadow.glowSoft(Colors.primary)]}>
-            <Text style={s.avatarText}>SJ</Text>
+            <Text style={s.avatarText}>
+              {user?.profile?.name 
+                ? user.profile.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() 
+                : 'US'}
+            </Text>
           </LinearGradient>
           <View>
-            <Text style={s.profileName}>Sarah Johnson</Text>
-            <Text style={s.profileRole}>Parent Account</Text>
+            <Text style={s.profileName}>{user?.profile?.name || user?.email || 'User'}</Text>
+            <Text style={s.profileRole}>
+              {user?.role === 'parent' ? 'Parent Account' : user?.role === 'admin' ? 'Admin Account' : 'Teen Rider'}
+            </Text>
           </View>
         </GlassCard>
 
@@ -140,7 +177,7 @@ export const SettingsScreen = ({ navigation }: any) => {
 
         {/* Teens Management */}
         <Text style={s.sectionTitle}>Linked Riders</Text>
-        {mockTeens.map(teen => (
+        {teens.map(teen => (
           <GlassCard key={teen.teen_id} style={s.teenRow} elevation="surface" onPress={() => {}}>
             <View style={s.teenInfo}>
               <LinearGradient colors={['#7C3AED', '#A855F7']} style={s.teenAvatar}>
@@ -158,7 +195,7 @@ export const SettingsScreen = ({ navigation }: any) => {
         {/* Sign Out */}
         <TouchableOpacity 
           style={[s.signOut, Shadow.glowSoft(Colors.danger + '10')]} 
-          onPress={() => navigation.replace('RoleSelect')} 
+          onPress={handleSignOut} 
           activeOpacity={0.8}
         >
           <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
@@ -172,7 +209,7 @@ export const SettingsScreen = ({ navigation }: any) => {
 };
 
 const s = StyleSheet.create({
-  sc: { paddingHorizontal: Spacing.xl, paddingTop: scaleHeight(55), paddingBottom: scaleHeight(110) },
+  sc: { paddingHorizontal: Spacing.xl, paddingTop: scaleHeight(55), paddingBottom: scaleHeight(110), alignSelf: 'center', width: '100%', maxWidth: 800 },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.xl },
   glowOverlay: {
     position: 'absolute',
