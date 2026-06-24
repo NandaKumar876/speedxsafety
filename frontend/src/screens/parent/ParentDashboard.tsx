@@ -7,15 +7,21 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensi
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, StatusBadge, SectionHeader } from '../../components/common';
-import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
+import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
-import { mockTeens, mockAlerts } from '../../data/mockData';
-import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop, useResponsive } from '../../utils/responsive';
+import { getTeens, getAlerts } from '../../services/dataService';
+import { getCurrentUser } from '../../services/authService';
+import { useState } from 'react';
 
 export const ParentDashboard = ({ navigation }: any) => {
-  const unreadAlerts = mockAlerts.filter(a => !a.read).length;
+  const [user, setUser] = useState<any>(null);
+  const [teens, setTeens] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { screenWidth, columns, isMobile } = useResponsive();
+
+  const unreadAlerts = alerts.filter(a => !a.read).length;
   const headerAnim = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(20)).current;
 
@@ -24,6 +30,28 @@ export const ParentDashboard = ({ navigation }: any) => {
       Animated.timing(headerAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
       Animated.spring(headerSlide, { toValue: 0, ...Springs.gentle }),
     ]).start();
+
+    const loadData = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          const parentId = currentUser.id;
+          const fetchedTeens = await getTeens(parentId);
+          const fetchedAlerts = await getAlerts(parentId);
+          setTeens(fetchedTeens);
+          setAlerts(fetchedAlerts);
+        }
+      } catch (err) {
+        console.warn('Failed to load parent dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+    const interval = setInterval(loadData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -59,7 +87,7 @@ export const ParentDashboard = ({ navigation }: any) => {
                   ))}
                 </View>
 
-                {mockTeens.map((teen, index) => (
+                {teens.map((teen, index) => (
                   <View key={teen.teen_id} style={[styles.mapPin, { top: `${20 + index * 35}%`, left: `${15 + index * 40}%` }]}>
                     <LinearGradient
                       colors={teen.is_driving ? ['#22C55E', '#10B981'] : ['#475569', '#64748B']}
@@ -91,7 +119,7 @@ export const ParentDashboard = ({ navigation }: any) => {
 
         {/* Teen Cards */}
         <SectionHeader title="Your Riders" />
-        {mockTeens.map((teen, idx) => {
+        {teens.map((teen, idx) => {
           const isOver = (teen.current_speed || 0) > teen.speed_limit;
           return (
             <GlassCard
@@ -174,7 +202,7 @@ export const ParentDashboard = ({ navigation }: any) => {
 
         {/* Recent Alerts */}
         <SectionHeader title="Recent Alerts" action="View All" onAction={() => navigation.navigate('Alerts')} />
-        {mockAlerts.slice(0, 3).map((alert, idx) => (
+        {alerts.slice(0, 3).map((alert, idx) => (
           <GlassCard key={alert.alert_id} style={[styles.alertCard, !alert.read && { borderColor: Colors.primaryMuted }]} animated delay={600 + idx * 80}>
             <View style={styles.alertRow}>
               <View style={[styles.alertIcon, { backgroundColor: getAlertColor(alert.type) + '15' }]}>
@@ -227,7 +255,7 @@ const getTimeAgo = (timestamp: number): string => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120) },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.xxl },
   greeting: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, letterSpacing: -0.5 },
   subGreeting: { fontSize: FontSize.md, color: Colors.textTertiary, marginTop: 2 },
