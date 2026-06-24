@@ -4,7 +4,6 @@
 
 const express = require('express');
 const router = express.Router();
-const { alerts } = require('../data/seedData');
 
 /**
  * GET /api/alerts
@@ -14,33 +13,48 @@ const { alerts } = require('../data/seedData');
  *   ?unread=true    — only unread alerts
  *   ?limit=10       — limit results
  */
-router.get('/', (req, res) => {
-  let result = [...alerts];
+router.get('/', async (req, res) => {
+  try {
+    let query = req.supabase.from('alerts').select('*');
 
-  if (req.query.teen_id) {
-    result = result.filter(a => a.teen_id === req.query.teen_id);
+    if (req.query.teen_id) {
+      query = query.eq('teen_id', req.query.teen_id);
+    }
+    if (req.query.type) {
+      query = query.eq('type', req.query.type);
+    }
+    if (req.query.unread === 'true') {
+      query = query.eq('read', false);
+    }
+
+    query = query.order('timestamp', { ascending: false });
+
+    if (req.query.limit) {
+      query = query.limit(parseInt(req.query.limit, 10));
+    }
+
+    const { data: alertsList, error } = await query;
+    if (error) throw error;
+
+    // Fetch total unread count for the context
+    const { count: unreadCount, error: countError } = await req.supabase
+      .from('alerts')
+      .select('*', { count: 'exact', head: true })
+      .eq('read', false);
+
+    if (countError) throw countError;
+
+    res.json({
+      count: alertsList.length,
+      unread_total: unreadCount || 0,
+      alerts: alertsList,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Fetch Failed',
+      message: error.message || 'An error occurred fetching alerts',
+    });
   }
-  if (req.query.type) {
-    result = result.filter(a => a.type === req.query.type);
-  }
-  if (req.query.unread === 'true') {
-    result = result.filter(a => !a.read);
-  }
-
-  // Sort by timestamp descending (most recent first)
-  result.sort((a, b) => b.timestamp - a.timestamp);
-
-  if (req.query.limit) {
-    result = result.slice(0, parseInt(req.query.limit, 10));
-  }
-
-  const unreadCount = alerts.filter(a => !a.read).length;
-
-  res.json({
-    count: result.length,
-    unread_total: unreadCount,
-    alerts: result,
-  });
 });
 
 /**
@@ -48,7 +62,7 @@ router.get('/', (req, res) => {
  * Create a new alert.
  * Body: { teen_id, teen_name, type, message, lat, lng, speed_recorded?, speed_limit? }
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { teen_id, teen_name, type, message, lat, lng, speed_recorded, speed_limit } = req.body;
 
   if (!teen_id || !type || !message) {
@@ -66,72 +80,111 @@ router.post('/', (req, res) => {
     });
   }
 
-  const newAlert = {
-    alert_id: `alert-${Date.now()}`,
-    teen_id,
-    teen_name: teen_name || 'Unknown',
-    type,
-    speed_recorded: speed_recorded || null,
-    speed_limit: speed_limit || null,
-    lat: lat || 0,
-    lng: lng || 0,
-    timestamp: Date.now(),
-    message,
-    read: false,
-  };
+  try {
+    const { data: newAlert, error } = await req.supabase
+      .from('alerts')
+      .insert({
+        teen_id,
+        teen_name: teen_name || 'Unknown',
+        type,
+        message,
+        lat: lat || 0,
+        lng: lng || 0,
+        speed_recorded: speed_recorded || null,
+        speed_limit: speed_limit || null,
+        timestamp: Date.now(),
+        read: false,
+      })
+      .select()
+      .single();
 
-  alerts.push(newAlert);
+    if (error) throw error;
 
-  res.status(201).json({
-    message: 'Alert created',
-    alert: newAlert,
-  });
+    res.status(201).json({
+      message: 'Alert created',
+      alert: newAlert,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Insert Failed',
+      message: error.message || 'An error occurred creating the alert',
+    });
+  }
 });
 
 /**
  * PATCH /api/alerts/:id/read
  * Mark a single alert as read.
  */
-router.patch('/:id/read', (req, res) => {
-  const alert = alerts.find(a => a.alert_id === req.params.id);
-  if (!alert) {
-    return res.status(404).json({ error: 'Not Found', message: 'Alert not found' });
+router.patch('/:id/read', async (req, res) => {
+  try {
+    const { data: alert, error } = await req.supabase
+      .from('alerts')
+      .update({ read: true })
+      .eq('alert_id', req.params.id)
+      .select()
+      .single();
+
+    if (error || !alert) {
+      return res.status(404).json({ error: 'Not Found', message: 'Alert not found' });
+    }
+
+    res.json({ message: 'Alert marked as read', alert });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Update Failed',
+      message: error.message || 'An error occurred updating the alert status',
+    });
   }
-
-  alert.read = true;
-
-  res.json({ message: 'Alert marked as read', alert });
 });
 
 /**
  * PATCH /api/alerts/read-all
  * Mark all alerts as read.
  */
-router.patch('/read-all', (_req, res) => {
-  let count = 0;
-  alerts.forEach(a => {
-    if (!a.read) {
-      a.read = true;
-      count++;
-    }
-  });
+router.patch('/read-all', async (req, res) => {
+  try {
+    const { data: results, error } = await req.supabase
+      .from('alerts')
+      .update({ read: true })
+      .eq('read', false)
+      .select();
 
-  res.json({ message: `${count} alerts marked as read` });
+    if (error) throw error;
+
+    res.json({ message: `${results ? results.length : 0} alerts marked as read` });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Update Failed',
+      message: error.message || 'An error occurred marking alerts as read',
+    });
+  }
 });
 
 /**
  * DELETE /api/alerts/:id
  * Delete an alert.
  */
-router.delete('/:id', (req, res) => {
-  const index = alerts.findIndex(a => a.alert_id === req.params.id);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Not Found', message: 'Alert not found' });
+router.delete('/:id', async (req, res) => {
+  try {
+    const { data: deletedAlert, error } = await req.supabase
+      .from('alerts')
+      .delete()
+      .eq('alert_id', req.params.id)
+      .select()
+      .single();
+
+    if (error || !deletedAlert) {
+      return res.status(404).json({ error: 'Not Found', message: 'Alert not found' });
+    }
+
+    res.json({ message: 'Alert deleted', alert: deletedAlert });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Delete Failed',
+      message: error.message || 'An error occurred deleting the alert',
+    });
   }
-
-  const deleted = alerts.splice(index, 1)[0];
-
-  res.json({ message: 'Alert deleted', alert: deleted });
 });
 
 module.exports = router;
