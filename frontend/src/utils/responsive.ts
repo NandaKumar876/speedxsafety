@@ -132,4 +132,69 @@ export const getCardWidth = (columns: number, gap: number, padding: number): num
   return availableWidth / columns;
 };
 
+/**
+ * React Hook for dynamic responsive calculations.
+ * Listens to screen resizing events and triggers re-renders.
+ */
+import { useState, useEffect } from 'react';
+
+export const useResponsive = () => {
+  const [dims, setDims] = useState(() => Dimensions.get('window'));
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setDims(window);
+    });
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  const width = dims.width;
+  const height = dims.height;
+
+  const widthScale = width / BASE_WIDTH;
+  const heightScale = height / BASE_HEIGHT;
+
+  const dScaleWidth = (size: number): number => {
+    const newSize = size * widthScale;
+    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  };
+
+  const dScaleHeight = (size: number): number => {
+    const newSize = size * heightScale;
+    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  };
+
+  const dScaleFont = (size: number): number => {
+    if (width > 500) {
+      return Math.round(PixelRatio.roundToNearestPixel(size * 1.15));
+    }
+    const newSize = size * widthScale;
+    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  };
+
+  const isMobile = width < 480;
+  const isTablet = width >= 480 && width < 1024;
+  const isDesktop = width >= 1024;
+
+  return {
+    screenWidth: width,
+    screenHeight: height,
+    isMobile,
+    isTablet,
+    isDesktop,
+    scaleWidth: dScaleWidth,
+    scaleHeight: dScaleHeight,
+    scaleFont: dScaleFont,
+    getCardWidth: (cols: number, gap: number, pad: number): number => {
+      const available = width - (pad * 2) - (gap * (cols - 1));
+      return available / cols;
+    },
+    columns: isMobile ? 1 : isTablet ? 2 : 3,
+    safeAreaTop: getSafeAreaTop(),
+    safeAreaBottom: getSafeAreaBottom(),
+  };
+};
+
 export { SCREEN_WIDTH, SCREEN_HEIGHT };
