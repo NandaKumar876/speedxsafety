@@ -8,15 +8,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, SectionHeader } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { mockTeens, mockAlerts, mockTrips } from '../../data/mockData';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
-import { getAllUsers, getAdminStats } from '../../services/dataService';
+import { getAllUsers, getAdminStats, getAlerts } from '../../services/dataService';
 import { AmbientGlow } from '../../components/common/SpatialComponents';
 
 export const AdminDashboard = ({ navigation }: any) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any[]>([]);
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -25,9 +25,10 @@ export const AdminDashboard = ({ navigation }: any) => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [dbStats, dbUsers] = await Promise.all([
+      const [dbStats, dbUsers, dbAlerts] = await Promise.all([
         getAdminStats(),
         getAllUsers(),
+        getAlerts(''),
       ]);
 
       setStats([
@@ -45,6 +46,7 @@ export const AdminDashboard = ({ navigation }: any) => {
         joined: u.created_at ? getTimeAgo(new Date(u.created_at).getTime()) : 'Just now',
       }));
       setRecentUsers(mappedRecent);
+      setRecentAlerts(dbAlerts.slice(0, 3));
     } catch (error) {
       console.error('Failed to load admin dashboard data:', error);
     } finally {
@@ -164,27 +166,34 @@ export const AdminDashboard = ({ navigation }: any) => {
 
           {/* System Alerts */}
           <SectionHeader title="System Alerts" action="View All" onAction={() => navigation.navigate('AdminAlerts')} />
-          {mockAlerts.slice(0, 3).map((alert, idx) => (
-            <GlassCard 
-              key={alert.alert_id} 
-              style={styles.alertCard} 
-              animated 
-              delay={550 + idx * 60}
-              elevation="surface"
-              glowColor={getAlertColor(alert.type) + '30'}
-            >
-              <View style={styles.alertRow}>
-                <View style={[styles.alertIconBg, { backgroundColor: getAlertColor(alert.type) + '1A' }]}>
-                  <Ionicons name={getAlertIcon(alert.type)} size={18} color={getAlertColor(alert.type)} />
-                </View>
-                <View style={styles.alertContent}>
-                  <Text style={styles.alertMessage} numberOfLines={1}>{alert.message}</Text>
-                  <Text style={styles.alertMeta}>{alert.teen_name} · {getTimeAgo(alert.timestamp)}</Text>
-                </View>
-                <View style={[styles.severityDot, { backgroundColor: getAlertColor(alert.type) }, Shadow.glow(getAlertColor(alert.type))]} />
-              </View>
+          {recentAlerts.length === 0 ? (
+            <GlassCard style={styles.emptyCard} elevation="surface">
+              <Ionicons name="checkmark-circle" size={32} color={Colors.safe} />
+              <Text style={styles.emptyText}>No recent system alerts</Text>
             </GlassCard>
-          ))}
+          ) : (
+            recentAlerts.map((alert, idx) => (
+              <GlassCard 
+                key={alert.alert_id} 
+                style={styles.alertCard} 
+                animated 
+                delay={550 + idx * 60}
+                elevation="surface"
+                glowColor={getAlertColor(alert.type) + '30'}
+              >
+                <View style={styles.alertRow}>
+                  <View style={[styles.alertIconBg, { backgroundColor: getAlertColor(alert.type) + '1A' }]}>
+                    <Ionicons name={getAlertIcon(alert.type)} size={18} color={getAlertColor(alert.type)} />
+                  </View>
+                  <View style={styles.alertContent}>
+                    <Text style={styles.alertMessage} numberOfLines={1}>{alert.message}</Text>
+                    <Text style={styles.alertMeta}>{alert.teen_name} · {getTimeAgo(alert.timestamp)}</Text>
+                  </View>
+                  <View style={[styles.severityDot, { backgroundColor: getAlertColor(alert.type) }, Shadow.glow(getAlertColor(alert.type))]} />
+                </View>
+              </GlassCard>
+            ))
+          )}
           
         </ScrollView>
       )}
@@ -230,6 +239,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: scaleHeight(55),
     paddingBottom: scaleHeight(110),
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 800,
   },
   headerCard: {
     marginBottom: Spacing.xl,
@@ -379,5 +391,16 @@ const styles = StyleSheet.create({
     width: scaleWidth(8),
     height: scaleWidth(8),
     borderRadius: scaleWidth(4),
+  },
+  emptyCard: {
+    alignItems: 'center',
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    marginBottom: Spacing.md,
+  },
+  emptyText: {
+    fontSize: FontSize.sm,
+    color: Colors.textTertiary,
   },
 });
