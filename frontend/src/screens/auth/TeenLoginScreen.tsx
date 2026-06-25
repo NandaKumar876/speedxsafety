@@ -12,16 +12,24 @@ import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 import { GlassInput, GlassCard } from '../../components/common';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
-import { signInWithGoogle } from '../../services/authService';
+import { supabase } from '../../services/supabase';
 
 export const TeenLoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const { height } = useWindowDimensions();
+
+  const [googleModalVisible, setGoogleModalVisible] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const [googleError, setGoogleError] = useState('');
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const badgePulse = useRef(new Animated.Value(1)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
+  const modalScale = useRef(new Animated.Value(0.9)).current;
+  const modalOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -46,24 +54,126 @@ export const TeenLoginScreen = ({ navigation }: any) => {
     ).start();
   }, []);
 
-
+  useEffect(() => {
+    if (googleModalVisible) {
+      Animated.parallel([
+        Animated.spring(modalScale, { toValue: 1, ...Springs.gentle }),
+        Animated.timing(modalOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+      ]).start();
+    } else {
+      modalScale.setValue(0.9);
+      modalOpacity.setValue(0);
+    }
+  }, [googleModalVisible]);
 
   const floatTranslate = floatAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, -6],
   });
 
-  const handleGoogleLoginPress = async () => {
-    setLoading(true);
-    try {
-      await signInWithGoogle('teen');
-    } catch (err: any) {
-      setLoading(false);
-      // Display the error using an alert or state variable (e.g. setGoogleError)
-      console.warn('Google login failed:', err);
-    }
+  const handleGoogleLoginPress = () => {
+    setErrorMsg('');
+    setGoogleEmail('');
+    setGoogleName('');
+    setGoogleError('');
+    setGoogleModalVisible(true);
   };
 
+  const submitGoogleLogin = async () => {
+    if (!googleEmail.trim()) {
+      setGoogleError('Please enter a Google email address');
+      return;
+    }
+    if (!googleName.trim()) {
+      setGoogleError('Please enter your name');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(googleEmail.trim())) {
+      setGoogleError('Please enter a valid email address');
+      return;
+    }
+
+    setGoogleError('');
+    setLoading(true);
+
+    try {
+      const emailVal = googleEmail.trim().toLowerCase();
+      const nameVal = googleName.trim();
+      const roleVal = 'teen';
+      const dummyPassword = 'DefaultDummyPassword123!';
+
+      // Try sign in
+      try {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: emailVal,
+          password: dummyPassword,
+        });
+
+        if (signInError) {
+          // Check if user is not found or has invalid credentials (which means we should sign up)
+          if (signInError.message.includes('Invalid login credentials') || signInError.message.includes('User not found')) {
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: emailVal,
+              password: dummyPassword,
+              options: {
+                data: {
+                  name: nameVal,
+                  role: roleVal,
+                },
+              },
+            });
+
+            if (signUpError) throw signUpError;
+
+            // Manual profile creation fallback in case database triggers are not present or failed
+            if (signUpData.user) {
+              const { error: profileError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: signUpData.user.id,
+                  email: emailVal,
+                  name: nameVal,
+                  role: roleVal,
+                  is_active: true,
+                });
+              if (profileError && !profileError.message.includes('relation "profiles" does not exist')) {
+                console.warn('Profile creation error during signup fallback:', profileError);
+              }
+            }
+          } else {
+            throw signInError;
+          }
+        } else {
+          // Signed in successfully. Let's make sure the profile is in place
+          if (signInData.user) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: signInData.user.id,
+                email: emailVal,
+                name: nameVal,
+                role: roleVal,
+                is_active: true,
+              });
+            // Safe to ignore if it already exists (duplicate key error) or relation is missing
+            if (profileError && !profileError.message.includes('duplicate key') && !profileError.message.includes('relation "profiles" does not exist')) {
+              console.warn('Profile sync on signin warning:', profileError);
+            }
+          }
+        }
+      } catch (innerErr: any) {
+        throw innerErr;
+      }
+
+      setLoading(false);
+      setGoogleModalVisible(false);
+      navigation.replace('TeenTabs');
+    } catch (err: any) {
+      setLoading(false);
+      setGoogleError(err.message || 'Google Sign-In failed. Please try again.');
+    }
+  };
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
@@ -127,6 +237,9 @@ export const TeenLoginScreen = ({ navigation }: any) => {
                   <Text style={styles.googleBtnText}>Sign in with Google</Text>
                 </View>
               </TouchableOpacity>
+              {errorMsg ? (
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              ) : null}
             </GlassCard>
           </Animated.View>
 
@@ -140,6 +253,54 @@ export const TeenLoginScreen = ({ navigation }: any) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
+      {/* Google Login Modal — Spatial */}
+      <Modal animationType="none" transparent visible={googleModalVisible} onRequestClose={() => setGoogleModalVisible(false)}>
+        <Animated.View style={[styles.modalOverlay, { opacity: modalOpacity }]}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => { setGoogleModalVisible(false); setGoogleError(''); }} activeOpacity={1} />
+          <Animated.View style={[styles.modalCard, { transform: [{ scale: modalScale }] }, Shadow.xl]}>
+            <View style={styles.modalHighlight} />
+            <View style={styles.modalHeader}>
+              <View style={styles.modalGoogleIcon}>
+                <Ionicons name="logo-google" size={22} color="#EA4335" />
+              </View>
+              <Text style={styles.modalTitle}>Google Sign In</Text>
+            </View>
+            <Text style={styles.modalSubtitle}>Authenticate with your Google Email and Full Name.</Text>
+
+            <Text style={{ fontSize: FontSize.xs, color: Colors.textTertiary, fontWeight: FontWeight.semibold, marginBottom: Spacing.xs }}>
+              Quick select test account:
+            </Text>
+            <View style={styles.quickSelectRow}>
+              <TouchableOpacity 
+                style={styles.quickSelectBtn}
+                onPress={() => {
+                  setGoogleEmail('alex.smith@gmail.com');
+                  setGoogleName('Alex Smith');
+                }}
+              >
+                <Text style={styles.quickSelectText}>Alex Smith (alex.smith@gmail.com)</Text>
+              </TouchableOpacity>
+            </View>
+
+            <GlassInput placeholder="Google Email Address" value={googleEmail} onChangeText={setGoogleEmail} keyboardType="email-address" icon={<Ionicons name="mail-outline" size={18} color={Colors.textTertiary} />} />
+            <View style={{ height: Spacing.md }} />
+            <GlassInput placeholder="Full Name" value={googleName} onChangeText={setGoogleName} icon={<Ionicons name="person-outline" size={18} color={Colors.textTertiary} />} />
+
+            {googleError ? <Text style={styles.modalError}>{googleError}</Text> : null}
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity style={[styles.modalBtn, styles.modalBtnCancel]} onPress={() => { setGoogleModalVisible(false); setGoogleError(''); }} disabled={loading}>
+                <Text style={styles.modalBtnCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtn} onPress={submitGoogleLogin} disabled={loading}>
+                <LinearGradient colors={Colors.gradientAccent as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.modalBtnConfirm}>
+                  {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.modalBtnConfirmText}>Continue</Text>}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
 
     </LinearGradient>
   );
@@ -173,12 +334,12 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: 'center',
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.xl,
   },
   iconOuter: {
     padding: 3,
     borderRadius: scaleWidth(28),
-    backgroundColor: 'rgba(168, 85, 247, 0.12)',
+    backgroundColor: 'rgba(124, 58, 237, 0.12)',
     marginBottom: Spacing.lg,
   },
   iconBg: {
@@ -196,7 +357,7 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
   subtitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     color: Colors.accentLight,
     marginTop: Spacing.xs,
     fontWeight: FontWeight.medium,
@@ -270,6 +431,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },
+  errorText: { color: Colors.danger, fontSize: FontSize.sm, fontWeight: FontWeight.medium, marginTop: Spacing.md, textAlign: 'center' },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -277,5 +439,21 @@ const styles = StyleSheet.create({
   },
   footerText: { color: Colors.textTertiary, fontSize: FontSize.md },
   footerLink: { color: Colors.accentLight, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
-
+  modalOverlay: { flex: 1, backgroundColor: Colors.overlay, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
+  modalCard: { width: '100%', maxWidth: 400, backgroundColor: Colors.bgSurface, borderRadius: BorderRadius.xxl, borderWidth: 1.5, borderColor: Colors.borderMedium, padding: Spacing.xxl, overflow: 'hidden', position: 'relative' },
+  modalHighlight: { position: 'absolute', top: 0, left: 20, right: 20, height: 1, backgroundColor: 'rgba(255, 255, 255, 0.08)' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.md },
+  modalGoogleIcon: { width: scaleWidth(40), height: scaleWidth(40), borderRadius: scaleWidth(12), backgroundColor: 'rgba(234, 67, 53, 0.10)', justifyContent: 'center', alignItems: 'center' },
+  modalTitle: { fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  modalSubtitle: { fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20, marginBottom: Spacing.lg },
+  modalError: { color: Colors.danger, fontSize: FontSize.xs, fontWeight: FontWeight.semibold, marginTop: Spacing.md, textAlign: 'center' },
+  modalBtnRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xl },
+  modalBtn: { flex: 1, borderRadius: BorderRadius.lg, overflow: 'hidden' },
+  modalBtnCancel: { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.border, height: 48, justifyContent: 'center', alignItems: 'center' },
+  modalBtnCancelText: { color: Colors.textSecondary, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  modalBtnConfirm: { height: 48, borderRadius: BorderRadius.lg, justifyContent: 'center', alignItems: 'center' },
+  modalBtnConfirmText: { color: '#fff', fontSize: FontSize.md, fontWeight: FontWeight.bold },
+  quickSelectRow: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.xs, marginBottom: Spacing.md, width: '100%' },
+  quickSelectBtn: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.round, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: Colors.border },
+  quickSelectText: { color: Colors.textSecondary, fontSize: FontSize.xs, fontWeight: FontWeight.medium },
 });
