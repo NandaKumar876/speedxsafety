@@ -2,7 +2,7 @@
 // SpeedxSafety - Trip History (Spatial Edition)
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +15,7 @@ import { getTrips } from '../../services/dataService';
 import { supabase } from '../../services/supabase';
 import { ActivityIndicator } from 'react-native';
 import { useRef } from 'react';
+import { Trip } from '../../types';
 
 const gradeColor = (g: string) =>
   g === 'A' ? Colors.safe : g === 'B' ? Colors.primaryLight : g === 'C' ? Colors.warning : Colors.danger;

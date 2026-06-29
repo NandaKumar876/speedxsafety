@@ -18,6 +18,7 @@ import { getCurrentUser } from '../../services/authService';
 import { getTrips } from '../../services/dataService';
 import { supabase } from '../../services/supabase';
 import { ActivityIndicator } from 'react-native';
+import { Trip } from '../../types';
 
 export const TeenDashboard = ({ navigation }: any) => {
   const [teen, setTeen] = useState<any>(null);

@@ -1,7 +1,7 @@
 // ============================================
 // SpeedxSafety - Weekly Reports (Spatial Edition)
 // ============================================
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +22,7 @@ export const ReportsScreen = () => {
   const { width } = useWindowDimensions();
   const [useStateTag] = React.useState(true); // to ensure useState is active
 
-  React.useEffect(() => {
+  useEffect(() => {
     const loadReportData = async () => {
       try {
         const user = await getCurrentUser();
@@ -123,7 +123,7 @@ export const ReportsScreen = () => {
         <GlassCard style={styles.chartCard} elevation="raised" animated delay={300}>
           <Text style={styles.chartTitle}>Daily Trips</Text>
           <Svg width={chartWidth+10} height={chartHeight+10} style={{alignSelf:'center'}}>
-            {r.daily_trips.map((t,i) => {
+            {r.daily_trips.map((t: number, i: number) => {
               const x = i*(chartWidth/7)+bg/2+5;
               const h = (t/maxT)*(chartHeight-10);
               return <Rect key={i} x={x} y={chartHeight-h} width={bw} height={h} rx={6} fill={t>0?Colors.primaryLight:'rgba(255,255,255,0.05)'} opacity={t>0?0.8:1}/>;
@@ -143,7 +143,7 @@ export const ReportsScreen = () => {
           </View>
           <Svg width={chartWidth+10} height={chartHeight+10} style={{alignSelf:'center'}}>
             <Polyline points={tp} fill="none" stroke={Colors.safe} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"/>
-            {r.score_trend.map((sc,i) => {
+            {r.score_trend.map((sc: number, i: number) => {
               const x=(i/(r.score_trend.length-1))*chartWidth;
               const y=chartHeight-((sc-sMin)/sR)*(chartHeight-20);
               return <SvgCircle key={i} cx={x} cy={y} r={3.5} fill={Colors.safe}/>;

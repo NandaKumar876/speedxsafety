@@ -2,7 +2,7 @@
 // SpeedxSafety - Badges & Streaks (Spatial Edition)
 // ============================================
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +19,7 @@ export const BadgesScreen = () => {
   const [badges, setBadges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const loadData = async () => {
       try {
         const user = await getCurrentUser();
@@ -53,7 +53,7 @@ export const BadgesScreen = () => {
     );
   }
 
-  const earnedCount = badges.filter(b => b.earned).length;
+  const earnedCount = badges.filter((b: any) => b.earned).length;
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={styles.container}>
@@ -106,7 +106,7 @@ export const BadgesScreen = () => {
         {/* Badge Grid */}
         <Text style={styles.sectionTitle}>All Badges</Text>
         <View style={styles.badgeGrid}>
-          {badges.map((badge, idx) => (
+          {badges.map((badge: any, idx: number) => (
             <GlassCard
               key={badge.id}
               style={[
