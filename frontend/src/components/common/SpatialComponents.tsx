@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../../constants/theme';
 import { Glass, Springs, Duration, TabBar, TouchFeedback } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaBottom } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -116,23 +117,25 @@ export const PulseRing: React.FC<PulseRingProps> = ({
   ).current;
 
   useEffect(() => {
-    animations.forEach((anim, i) => {
+    const loops = animations.map((anim, i) =>
       Animated.loop(
         Animated.sequence([
           Animated.delay(i * 600),
           Animated.timing(anim, {
             toValue: 1,
             duration: 1500,
-            useNativeDriver: true,
+            useNativeDriver: canUseNativeDriver,
           }),
           Animated.timing(anim, {
             toValue: 0,
             duration: 0,
-            useNativeDriver: true,
+            useNativeDriver: canUseNativeDriver,
           }),
         ])
-      ).start();
-    });
+      )
+    );
+    loops.forEach(loop => loop.start());
+    return () => loops.forEach(loop => loop.stop());
   }, []);
 
   return (
@@ -261,22 +264,24 @@ export const FloatingOrbs: React.FC<FloatingOrbsProps> = ({ orbs }) => {
   ).current;
 
   useEffect(() => {
-    animations.forEach((anim, i) => {
+    const loops = animations.map((anim, i) =>
       Animated.loop(
         Animated.sequence([
           Animated.timing(anim, {
             toValue: 1,
             duration: 4000 + i * 1500,
-            useNativeDriver: true,
+            useNativeDriver: canUseNativeDriver,
           }),
           Animated.timing(anim, {
             toValue: 0,
             duration: 4000 + i * 1500,
-            useNativeDriver: true,
+            useNativeDriver: canUseNativeDriver,
           }),
         ])
-      ).start();
-    });
+      )
+    );
+    loops.forEach(loop => loop.start());
+    return () => loops.forEach(loop => loop.stop());
   }, []);
 
   return (
@@ -450,12 +455,12 @@ export const SpatialModalContent: React.FC<SpatialModalContentProps> = ({
     if (visible) {
       Animated.parallel([
         Animated.spring(scaleAnim, { toValue: 1, ...Springs.gentle }),
-        Animated.timing(opacityAnim, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 1, duration: Duration.normal, useNativeDriver: canUseNativeDriver }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(scaleAnim, { toValue: 0.9, duration: Duration.fast, useNativeDriver: true }),
-        Animated.timing(opacityAnim, { toValue: 0, duration: Duration.fast, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 0.9, duration: Duration.fast, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(opacityAnim, { toValue: 0, duration: Duration.fast, useNativeDriver: canUseNativeDriver }),
       ]).start();
     }
   }, [visible]);
@@ -507,7 +512,7 @@ export const StaggerItem: React.FC<{
         toValue: 1,
         duration: Duration.entrance,
         delay: index * stagger,
-        useNativeDriver: true,
+        useNativeDriver: canUseNativeDriver,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
