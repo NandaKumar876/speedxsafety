@@ -12,6 +12,7 @@ import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { scaleWidth, scaleHeight, scaleFont, getSafeAreaBottom } from '../../utils/responsive';
 import { AmbientGlow } from '../../components/common/SpatialComponents';
+import { canUseNativeDriver } from '../../utils/platform';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -63,26 +64,30 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
 
   // Start trail and panel animations
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(trailOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.timing(panelFade, { toValue: 1, duration: 600, useNativeDriver: true }),
-    ]).start();
+    const entranceAnim = Animated.parallel([
+      Animated.timing(trailOpacity, { toValue: 1, duration: 800, useNativeDriver: canUseNativeDriver }),
+      Animated.timing(panelFade, { toValue: 1, duration: 600, useNativeDriver: canUseNativeDriver }),
+    ]);
+    entranceAnim.start();
+    return () => entranceAnim.stop();
   }, []);
 
   // Pulse animation
   useEffect(() => {
-    Animated.loop(
+    const pulseLoop = Animated.loop(
       Animated.parallel([
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1, duration: 1600, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 1600, useNativeDriver: canUseNativeDriver }),
+          Animated.timing(pulseAnim, { toValue: 0, duration: 0, useNativeDriver: canUseNativeDriver }),
         ]),
         Animated.sequence([
-          Animated.timing(pulseOpacity, { toValue: 0, duration: 1600, useNativeDriver: true }),
-          Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0, duration: 1600, useNativeDriver: canUseNativeDriver }),
+          Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: canUseNativeDriver }),
         ]),
       ])
-    ).start();
+    );
+    pulseLoop.start();
+    return () => pulseLoop.stop();
   }, []);
 
   // Move along route
@@ -96,12 +101,12 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
           Animated.timing(markerX, {
             toValue: point.x * SCREEN_WIDTH,
             duration: 2000,
-            useNativeDriver: true,
+            useNativeDriver: canUseNativeDriver,
           }),
           Animated.timing(markerY, {
             toValue: point.y * SCREEN_HEIGHT * 0.65,
             duration: 2000,
-            useNativeDriver: true,
+            useNativeDriver: canUseNativeDriver,
           }),
         ]).start();
         return next;
