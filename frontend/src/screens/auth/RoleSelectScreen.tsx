@@ -11,6 +11,7 @@ import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../
 import { Springs, Duration, Stagger } from '../../constants/spatial';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 
 export const RoleSelectScreen = ({ navigation }: any) => {
   const logoScale = useRef(new Animated.Value(0.6)).current;
@@ -31,34 +32,36 @@ export const RoleSelectScreen = ({ navigation }: any) => {
       // Logo entrance with spring
       Animated.parallel([
         Animated.spring(logoScale, { toValue: 1, ...Springs.bouncy }),
-        Animated.timing(logoOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+        Animated.timing(logoOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: canUseNativeDriver }),
       ]),
       // Title slide up
       Animated.parallel([
         Animated.spring(titleSlide, { toValue: 0, ...Springs.gentle }),
-        Animated.timing(titleOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+        Animated.timing(titleOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: canUseNativeDriver }),
       ]),
       // Cards staggered entrance
       Animated.parallel([
         Animated.spring(cardSlide1, { toValue: 0, ...Springs.gentle }),
-        Animated.timing(cardOpacity1, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+        Animated.timing(cardOpacity1, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
       ]),
       Animated.parallel([
         Animated.spring(cardSlide2, { toValue: 0, ...Springs.gentle }),
-        Animated.timing(cardOpacity2, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
-        Animated.timing(adminOpacity, { toValue: 1, duration: Duration.slow, useNativeDriver: true }),
+        Animated.timing(cardOpacity2, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(adminOpacity, { toValue: 1, duration: Duration.slow, useNativeDriver: canUseNativeDriver }),
       ]),
     ]).start();
   }, []);
 
   // Continuous floating animation for logo
   useEffect(() => {
-    Animated.loop(
+    const floatLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(floatAnim, { toValue: 1, duration: 2500, useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 2500, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 1, duration: 2500, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(floatAnim, { toValue: 0, duration: 2500, useNativeDriver: canUseNativeDriver }),
       ])
-    ).start();
+    );
+    floatLoop.start();
+    return () => floatLoop.stop();
   }, []);
 
   const floatTranslate = floatAnim.interpolate({
