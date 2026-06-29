@@ -11,6 +11,7 @@ import { GlassInput, GradientButton, GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
 import { signInWithGoogle } from '../../services/authService';
 import { supabase } from '../../services/supabase';
@@ -36,23 +37,25 @@ export const ParentLoginScreen = ({ navigation, route }: any) => {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
       Animated.spring(slideAnim, { toValue: 0, ...Springs.gentle }),
     ]).start();
 
-    Animated.loop(
+    const floatLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(floatAnim, { toValue: 1, duration: 2200, useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 2200, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 1, duration: 2200, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(floatAnim, { toValue: 0, duration: 2200, useNativeDriver: canUseNativeDriver }),
       ])
-    ).start();
+    );
+    floatLoop.start();
+    return () => floatLoop.stop();
   }, []);
 
   useEffect(() => {
     if (googleModalVisible) {
       Animated.parallel([
         Animated.spring(modalScale, { toValue: 1, ...Springs.gentle }),
-        Animated.timing(modalOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+        Animated.timing(modalOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: canUseNativeDriver }),
       ]).start();
     } else {
       modalScale.setValue(0.9);
