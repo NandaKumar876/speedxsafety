@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Shadow, BorderRadius } from '../constants/theme';
 import { scaleWidth, scaleHeight } from '../utils/responsive';
+import { canUseNativeDriver } from '../utils/platform';
 
 interface AnimatedMapMarkerProps {
   speed: number;
@@ -27,27 +28,34 @@ export const AnimatedMapMarker: React.FC<AnimatedMapMarkerProps> = ({
   useEffect(() => {
     if (isActive) {
       // Loop pulse animation
-      Animated.loop(
+      const pulseLoop = Animated.loop(
         Animated.parallel([
           Animated.sequence([
-            Animated.timing(pulseAnim, { toValue: 1, duration: 1800, useNativeDriver: true }),
-            Animated.timing(pulseAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
+            Animated.timing(pulseAnim, { toValue: 1, duration: 1800, useNativeDriver: canUseNativeDriver }),
+            Animated.timing(pulseAnim, { toValue: 0, duration: 0, useNativeDriver: canUseNativeDriver }),
           ]),
           Animated.sequence([
-            Animated.timing(pulseOpacity, { toValue: 0, duration: 1800, useNativeDriver: true }),
-            Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true }),
+            Animated.timing(pulseOpacity, { toValue: 0, duration: 1800, useNativeDriver: canUseNativeDriver }),
+            Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: canUseNativeDriver }),
           ]),
         ])
-      ).start();
+      );
+      pulseLoop.start();
 
       // Loop gentle floating animation for the entire marker label/badge to feel spatial
-      Animated.loop(
+      const floatLoop = Animated.loop(
         Animated.sequence([
-          Animated.timing(floatAnim, { toValue: -3, duration: 1200, useNativeDriver: true }),
-          Animated.timing(floatAnim, { toValue: 3, duration: 1200, useNativeDriver: true }),
-          Animated.timing(floatAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+          Animated.timing(floatAnim, { toValue: -3, duration: 1200, useNativeDriver: canUseNativeDriver }),
+          Animated.timing(floatAnim, { toValue: 3, duration: 1200, useNativeDriver: canUseNativeDriver }),
+          Animated.timing(floatAnim, { toValue: 0, duration: 600, useNativeDriver: canUseNativeDriver }),
         ])
-      ).start();
+      );
+      floatLoop.start();
+
+      return () => {
+        pulseLoop.stop();
+        floatLoop.stop();
+      };
     } else {
       pulseAnim.setValue(0);
       pulseOpacity.setValue(0);
