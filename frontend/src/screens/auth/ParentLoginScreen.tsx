@@ -18,8 +18,8 @@ import { supabase } from '../../services/supabase';
 
 export const ParentLoginScreen = ({ navigation, route }: any) => {
   const isAdmin = route?.params?.isAdmin;
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(isAdmin ? 'tony' : '');
+  const [password, setPassword] = useState(isAdmin ? 'stark' : '');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const { height } = useWindowDimensions();
