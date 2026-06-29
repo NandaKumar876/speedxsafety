@@ -13,6 +13,7 @@ import {
 import { AppNavigator } from './src/app/navigation/AppNavigator';
 import { Colors } from './src/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { canUseNativeDriver } from './src/utils/platform';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -33,12 +34,12 @@ export default function App() {
         Animated.timing(loadingFade, {
           toValue: 0,
           duration: 300,
-          useNativeDriver: true,
+          useNativeDriver: canUseNativeDriver,
         }),
         Animated.timing(fadeIn, {
           toValue: 1,
           duration: 400,
-          useNativeDriver: true,
+          useNativeDriver: canUseNativeDriver,
         }),
       ]).start();
     }
