@@ -11,6 +11,7 @@ import { GlassInput, GradientButton, GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
 import { UserRole } from '../../types';
 import { signUp } from '../../services/authService';
@@ -31,7 +32,7 @@ export const RegisterScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
       Animated.spring(slideAnim, { toValue: 0, ...Springs.gentle }),
     ]).start();
   }, []);
@@ -42,7 +43,7 @@ export const RegisterScreen = ({ navigation }: any) => {
       formFade.setValue(0);
       formSlide.setValue(20);
       Animated.parallel([
-        Animated.timing(formFade, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+        Animated.timing(formFade, { toValue: 1, duration: Duration.normal, useNativeDriver: canUseNativeDriver }),
         Animated.spring(formSlide, { toValue: 0, ...Springs.gentle }),
       ]).start();
     }
