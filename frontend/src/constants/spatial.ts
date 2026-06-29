@@ -4,6 +4,7 @@
 // ============================================
 
 import { Easing } from 'react-native';
+import { canUseNativeDriver } from '../utils/platform';
 
 // ── Depth / Elevation Layers ─────────────────
 // 5-tier depth system for spatial hierarchy
@@ -49,24 +50,24 @@ export const Springs = {
   gentle: {
     friction: 26,
     tension: 170,
-    useNativeDriver: true,
+    useNativeDriver: canUseNativeDriver,
   },
   snappy: {
     friction: 18,
     tension: 280,
-    useNativeDriver: true,
+    useNativeDriver: canUseNativeDriver,
   },
   bouncy: {
     friction: 8,
     tension: 180,
-    useNativeDriver: true,
+    useNativeDriver: canUseNativeDriver,
   },
   stiff: {
     friction: 30,
     tension: 400,
-    useNativeDriver: true,
+    useNativeDriver: canUseNativeDriver,
   },
-} as const;
+};
 
 // ── Animation Duration Presets ───────────────
 export const Duration = {
