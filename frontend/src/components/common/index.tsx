@@ -19,6 +19,7 @@ import { BlurView } from 'expo-blur';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, FontFamily, Shadow } from '../../constants/theme';
 import { Springs, Duration, Glass, TouchFeedback } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 
 // ── Glass Card (Spatial Edition) ─────────────
 interface GlassCardProps {
@@ -46,7 +47,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
           toValue: 1,
           duration: Duration.entrance,
           delay,
-          useNativeDriver: true,
+          useNativeDriver: canUseNativeDriver,
         }),
         Animated.spring(slideAnim, {
           toValue: 0,
@@ -240,12 +241,14 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ label, color, small, p
 
   useEffect(() => {
     if (pulse) {
-      Animated.loop(
+      const pulseLoop = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.05, duration: 800, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1.05, duration: 800, useNativeDriver: canUseNativeDriver }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: canUseNativeDriver }),
         ])
-      ).start();
+      );
+      pulseLoop.start();
+      return () => pulseLoop.stop();
     }
   }, [pulse]);
 
@@ -304,7 +307,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, action, onA
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
       Animated.spring(slideAnim, { toValue: 0, ...Springs.gentle }),
     ]).start();
   }, []);
@@ -333,12 +336,14 @@ export const Skeleton: React.FC<SkeletonProps> = ({ width, height, borderRadius 
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const shimmerLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmerAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-        Animated.timing(shimmerAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 1, duration: 1000, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(shimmerAnim, { toValue: 0, duration: 1000, useNativeDriver: canUseNativeDriver }),
       ])
-    ).start();
+    );
+    shimmerLoop.start();
+    return () => shimmerLoop.stop();
   }, []);
 
   const opacity = shimmerAnim.interpolate({
