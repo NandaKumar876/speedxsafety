@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 import { GlassInput, GlassCard } from '../../components/common';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
 import { supabase } from '../../services/supabase';
@@ -33,32 +34,39 @@ export const TeenLoginScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
       Animated.spring(slideAnim, { toValue: 0, ...Springs.gentle }),
     ]).start();
 
     // Floating icon animation
-    Animated.loop(
+    const floatLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(floatAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 1, duration: 2000, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(floatAnim, { toValue: 0, duration: 2000, useNativeDriver: canUseNativeDriver }),
       ])
-    ).start();
+    );
+    floatLoop.start();
 
     // Pulsing badge animation
-    Animated.loop(
+    const badgeLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(badgePulse, { toValue: 1.06, duration: 1200, useNativeDriver: true }),
-        Animated.timing(badgePulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(badgePulse, { toValue: 1.06, duration: 1200, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(badgePulse, { toValue: 1, duration: 1200, useNativeDriver: canUseNativeDriver }),
       ])
-    ).start();
+    );
+    badgeLoop.start();
+
+    return () => {
+      floatLoop.stop();
+      badgeLoop.stop();
+    };
   }, []);
 
   useEffect(() => {
     if (googleModalVisible) {
       Animated.parallel([
         Animated.spring(modalScale, { toValue: 1, ...Springs.gentle }),
-        Animated.timing(modalOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: true }),
+        Animated.timing(modalOpacity, { toValue: 1, duration: Duration.normal, useNativeDriver: canUseNativeDriver }),
       ]).start();
     } else {
       modalScale.setValue(0.9);
