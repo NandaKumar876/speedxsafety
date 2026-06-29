@@ -10,6 +10,7 @@ import { GlassCard, StatusBadge, SectionHeader } from '../../components/common';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop, useResponsive } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 import { getTeens, getAlerts } from '../../services/dataService';
 import { getCurrentUser } from '../../services/authService';
 import { useState } from 'react';
@@ -27,7 +28,7 @@ export const ParentDashboard = ({ navigation }: any) => {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(headerAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+      Animated.timing(headerAnim, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
       Animated.spring(headerSlide, { toValue: 0, ...Springs.gentle }),
     ]).start();
 
