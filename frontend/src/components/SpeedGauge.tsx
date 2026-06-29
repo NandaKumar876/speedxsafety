@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { Colors, FontSize, FontWeight, Shadow } from '../constants/theme';
 import { scaleWidth, scaleHeight, scaleFont } from '../utils/responsive';
+import { canUseNativeDriver } from '../utils/platform';
 
 interface SpeedGaugeProps {
   speed: number;
@@ -43,18 +44,20 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, speedLimit, size 
     Animated.timing(glowAnim, {
       toValue: Math.min(percentage * 1.2, 1),
       duration: 600,
-      useNativeDriver: true,
+      useNativeDriver: canUseNativeDriver,
     }).start();
   }, [speed]);
 
   useEffect(() => {
     if (isOverLimit) {
-      Animated.loop(
+      const pulseLoop = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.04, duration: 400, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1.04, duration: 400, useNativeDriver: canUseNativeDriver }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 400, useNativeDriver: canUseNativeDriver }),
         ])
-      ).start();
+      );
+      pulseLoop.start();
+      return () => pulseLoop.stop();
     } else {
       pulseAnim.setValue(1);
     }
@@ -62,13 +65,15 @@ export const SpeedGauge: React.FC<SpeedGaugeProps> = ({ speed, speedLimit, size 
 
   // Slow continuous ring rotation for ambient effect
   useEffect(() => {
-    Animated.loop(
+    const ringLoop = Animated.loop(
       Animated.timing(ringRotation, {
         toValue: 1,
         duration: 20000,
-        useNativeDriver: true,
+        useNativeDriver: canUseNativeDriver,
       })
-    ).start();
+    );
+    ringLoop.start();
+    return () => ringLoop.stop();
   }, []);
 
   const strokeDashoffset = animatedValue.interpolate({
