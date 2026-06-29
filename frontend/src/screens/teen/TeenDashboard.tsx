@@ -13,6 +13,7 @@ import { FloatingOrbs, PulseRing } from '../../components/common/SpatialComponen
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop, useResponsive } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 import { getCurrentUser } from '../../services/authService';
 import { getTrips } from '../../services/dataService';
 import { supabase } from '../../services/supabase';
@@ -30,10 +31,11 @@ export const TeenDashboard = ({ navigation }: any) => {
   const driveButtonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerFade, { toValue: 1, duration: Duration.entrance, useNativeDriver: true }),
+    const entranceAnim = Animated.parallel([
+      Animated.timing(headerFade, { toValue: 1, duration: Duration.entrance, useNativeDriver: canUseNativeDriver }),
       Animated.spring(headerSlide, { toValue: 0, ...Springs.gentle }),
-    ]).start();
+    ]);
+    entranceAnim.start();
 
     const loadTeenData = async () => {
       try {
@@ -96,12 +98,14 @@ export const TeenDashboard = ({ navigation }: any) => {
 
   // SOS pulse animation
   useEffect(() => {
-    Animated.loop(
+    const sosLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(sosPulse, { toValue: 1.08, duration: 700, useNativeDriver: true }),
-        Animated.timing(sosPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(sosPulse, { toValue: 1.08, duration: 700, useNativeDriver: canUseNativeDriver }),
+        Animated.timing(sosPulse, { toValue: 1, duration: 700, useNativeDriver: canUseNativeDriver }),
       ])
-    ).start();
+    );
+    sosLoop.start();
+    return () => sosLoop.stop();
   }, []);
 
   if (loading || !teen) {
