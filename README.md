@@ -12,27 +12,27 @@ This project is built using a clean, modern, and decoupled architecture. For det
 
 ## Features
 
-### 🌟 Premium UX & Micro-Animations
+###  Premium UX & Micro-Animations
 - **Electric Blue & Violet Palette**: A highly polished and premium dark design replacing default styling.
 - **Micro-Animations**: Staggered card fade-ins, loading skeleton views, custom shadows, and spring-based animations.
 - **Speedometer Arc**: Interactive speed gauge with tick marks and smooth spring physics.
 
-### 📱 Responsive Design
+###  Responsive Design
 - Handles phone, tablet, and web aspect ratios using a dynamic layout scaling hook (`useResponsive` / `getResponsiveInfo`).
 
-### 🔑 Role-Based Access Controls (RBAC)
+###  Role-Based Access Controls (RBAC)
 - Separated login flows for **Parents**, **Teen Riders**, and **System Administrators** starting from a central landing selector page.
 
-### 🗺️ Live Vehicle Tracking ("Bike Game" View)
+###  Live Vehicle Tracking ("Bike Game" View)
 - Real-time full-screen map tracing the rider's path with a rotating, heading-aware vehicle icon.
 - Dynamic route polyline styling based on current speed thresholds (green for safe, yellow/red for limit breaches).
 
-### 🖥️ Admin Panel
+###  Admin Panel
 - **Overview Dashboard**: Displays aggregated metrics (active trips, average safety scores, alerts, user counts).
 - **User Management**: Search, filter, and toggle active/suspended status for any profile.
 - **Alert History Control**: Global alerts dashboard to monitor safety infractions.
 
-### ⚡ Supabase Integration
+###  Supabase Integration
 - Built-in session persistence and OAuth/Email auth.
 - Real-time location tracking and instant alert feeds via Supabase Channels.
 - Strict PostgreSQL Row-Level Security (RLS) policies to keep teen data accessible only to their respective parents.
