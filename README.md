@@ -8,7 +8,7 @@ This project is built using a clean, modern, and decoupled architecture. For det
 **/frontend** - React Native (Expo) mobile application. Built using a modern **Electric Blue / Violet** dark theme, responsive grids, and standard **Inter** typography.
 - **/backend** - Contains the database setup and SQL scripts for migration.
 
----
+--
 
 ## Features
 
