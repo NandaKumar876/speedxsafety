@@ -222,8 +222,10 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
             styles.markerContainer,
             {
               transform: [
-                { translateX: Animated.subtract(markerX, new Animated.Value(22)) },
-                { translateY: Animated.subtract(markerY, new Animated.Value(22)) },
+                { translateX: markerX },
+                { translateY: markerY },
+                { translateX: -22 },
+                { translateY: -22 },
               ],
             },
           ]}
