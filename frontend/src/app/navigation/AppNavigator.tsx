@@ -98,7 +98,7 @@ function ParentTabs() {
             case 'Dashboard': iconName = 'grid'; break;
             case 'Alerts': iconName = 'notifications'; break;
             case 'Geofences': iconName = 'location'; break;
-            case 'Reports': iconName = 'bar-chart'; break;
+            case 'Reports': iconName = 'stats-chart'; break;
             case 'Settings': iconName = 'settings'; break;
           }
           return <Ionicons name={iconName} size={22} color={color} />;
