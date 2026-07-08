@@ -224,7 +224,7 @@ export const ParentDashboard = ({ navigation }: any) => {
           {[
             { icon: 'speedometer', label: 'Set Limits', color: Colors.primaryLight, nav: 'Settings' },
             { icon: 'location', label: 'Geofences', color: Colors.safe, nav: 'Geofences' },
-            { icon: 'bar-chart', label: 'Reports', color: Colors.warning, nav: 'Reports' },
+            { icon: 'stats-chart', label: 'Reports', color: Colors.warning, nav: 'Reports' },
             { icon: 'people', label: 'Manage', color: Colors.accent, nav: 'Settings' },
           ].map((action, idx) => (
             <TouchableOpacity key={idx} style={styles.actionBtn} onPress={() => navigation.navigate(action.nav)} activeOpacity={0.7}>
