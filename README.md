@@ -50,7 +50,7 @@ This project is built using a clean, modern, and decoupled architecture. For det
 
 ## Getting Started
 
-### 1. Database Setup
+## 1. Database Setup
 Import the SQL schema located at [backend/supabase-schema.sql](file:///c:/Users/nanda/Desktop/speedxsafety/backend/supabase-schema.sql) into your Supabase project's SQL editor and execute it. This creates:
 - `profiles`, `teens`, `trips`, `alerts`, `geofences`, `badges`, and `teen_locations` tables.
 - Triggers to automatically provision user profiles upon signup.
