@@ -10,8 +10,7 @@ import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
 import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
 import { getCurrentUser } from '../../services/authService';
-import { getBadges } from '../../services/dataService';
-import { supabase } from '../../services/supabase';
+import { getBadges, getTeenByUserUid } from '../../services/dataService';
 import { ActivityIndicator } from 'react-native';
 
 export const BadgesScreen = () => {
@@ -24,11 +23,7 @@ export const BadgesScreen = () => {
       try {
         const user = await getCurrentUser();
         if (user) {
-          const { data: teenData } = await supabase
-            .from('teens')
-            .select('*')
-            .eq('user_uid', user.id)
-            .maybeSingle();
+          const teenData = await getTeenByUserUid(user.id);
 
           if (teenData) {
             setTeen(teenData);
