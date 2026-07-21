@@ -11,8 +11,7 @@ import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../
 import { Springs } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 import { getCurrentUser } from '../../services/authService';
-import { getTrips } from '../../services/dataService';
-import { supabase } from '../../services/supabase';
+import { getTrips, getTeenByUserUid } from '../../services/dataService';
 import { ActivityIndicator } from 'react-native';
 import { useRef } from 'react';
 import { Trip } from '../../types';
@@ -37,11 +36,7 @@ export const TripHistoryScreen = () => {
       try {
         const user = await getCurrentUser();
         if (user) {
-          const { data: teen } = await supabase
-            .from('teens')
-            .select('teen_id')
-            .eq('user_uid', user.id)
-            .maybeSingle();
+          const teen = await getTeenByUserUid(user.id);
 
           if (teen) {
             const fetched = await getTrips(teen.teen_id);
