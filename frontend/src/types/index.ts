@@ -29,6 +29,7 @@ export interface Profile {
 export interface Teen {
   teen_id: string;
   parent_uid: string;
+  user_uid?: string;
   name: string;
   avatar?: string;
   speed_limit: number; // km/h
