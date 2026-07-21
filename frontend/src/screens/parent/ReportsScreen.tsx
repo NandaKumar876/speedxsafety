@@ -20,7 +20,6 @@ export const ReportsScreen = () => {
   const [teen, setTeen] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { width } = useWindowDimensions();
-  const [useStateTag] = React.useState(true); // to ensure useState is active
 
   useEffect(() => {
     const loadReportData = async () => {
@@ -70,13 +69,16 @@ export const ReportsScreen = () => {
   const actualWidth = Math.min(width, maxW);
   const chartWidth = Math.max(260, actualWidth - Spacing.xl * 2 - Spacing.lg * 2 - 10);
   const chartHeight = scaleHeight(120);
-  const maxT = Math.max(...r.daily_trips, 1);
+  const dailyTrips = r.daily_trips || [0, 0, 0, 0, 0, 0, 0];
+  const scoreTrend = r.score_trend || [100, 100, 100, 100, 100, 100, 100];
+  const maxT = Math.max(...dailyTrips, 1);
   const bw = (chartWidth / 7) * 0.6, bg = (chartWidth / 7) * 0.4;
-  const sMin = Math.min(...r.score_trend), sMax = Math.max(...r.score_trend);
+  const sMin = Math.min(...scoreTrend), sMax = Math.max(...scoreTrend);
   const sR = sMax - sMin || 1;
-  const tp = r.score_trend.map((s: number, i: number) =>
-    `${(i / (r.score_trend.length - 1)) * chartWidth},${chartHeight - ((s - sMin) / sR) * (chartHeight - 20)}`
+  const tp = scoreTrend.map((s: number, i: number) =>
+    `${(i / (scoreTrend.length - 1)) * chartWidth},${chartHeight - ((s - sMin) / sR) * (chartHeight - 20)}`
   ).join(' ');
+  const trendDiff = (scoreTrend[scoreTrend.length - 1] || 0) - (scoreTrend[0] || 0);
 
   return (
     <LinearGradient colors={Colors.gradientBg as any} style={{flex:1}}>
@@ -123,7 +125,7 @@ export const ReportsScreen = () => {
         <GlassCard style={styles.chartCard} elevation="raised" animated delay={300}>
           <Text style={styles.chartTitle}>Daily Trips</Text>
           <Svg width={chartWidth+10} height={chartHeight+10} style={{alignSelf:'center'}}>
-            {r.daily_trips.map((t: number, i: number) => {
+            {dailyTrips.map((t: number, i: number) => {
               const x = i*(chartWidth/7)+bg/2+5;
               const h = (t/maxT)*(chartHeight-10);
               return <Rect key={i} x={x} y={chartHeight-h} width={bw} height={h} rx={6} fill={t>0?Colors.primaryLight:'rgba(255,255,255,0.05)'} opacity={t>0?0.8:1}/>;
@@ -138,13 +140,13 @@ export const ReportsScreen = () => {
             <Text style={styles.chartTitle}>Score Trend</Text>
             <View style={styles.trendBadge}>
               <Ionicons name="trending-up" size={14} color={Colors.safe}/>
-              <Text style={styles.trendText}>+{r.score_trend[6]-r.score_trend[0]}</Text>
+              <Text style={styles.trendText}>{trendDiff >= 0 ? `+${trendDiff}` : trendDiff}</Text>
             </View>
           </View>
           <Svg width={chartWidth+10} height={chartHeight+10} style={{alignSelf:'center'}}>
             <Polyline points={tp} fill="none" stroke={Colors.safe} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"/>
-            {r.score_trend.map((sc: number, i: number) => {
-              const x=(i/(r.score_trend.length-1))*chartWidth;
+            {scoreTrend.map((sc: number, i: number) => {
+              const x=(i/(scoreTrend.length-1))*chartWidth;
               const y=chartHeight-((sc-sMin)/sR)*(chartHeight-20);
               return <SvgCircle key={i} cx={x} cy={y} r={3.5} fill={Colors.safe}/>;
             })}
