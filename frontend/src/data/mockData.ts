@@ -24,6 +24,7 @@ export const mockTeens: Teen[] = [
   {
     teen_id: 'teen-001',
     parent_uid: 'parent-001',
+    user_uid: 'teen-001',
     name: 'Alex Johnson',
     speed_limit: 80,
     curfew_start: '22:00',
@@ -39,6 +40,7 @@ export const mockTeens: Teen[] = [
   {
     teen_id: 'teen-002',
     parent_uid: 'parent-001',
+    user_uid: 'teen-002',
     name: 'Emma Johnson',
     speed_limit: 70,
     curfew_start: '21:00',
