@@ -15,8 +15,7 @@ import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop, useResponsive } from '../../utils/responsive';
 import { canUseNativeDriver } from '../../utils/platform';
 import { getCurrentUser } from '../../services/authService';
-import { getTrips } from '../../services/dataService';
-import { supabase } from '../../services/supabase';
+import { getTrips, getTeenByUserUid, createTeenProfile } from '../../services/dataService';
 import { ActivityIndicator } from 'react-native';
 import { Trip } from '../../types';
 
@@ -42,28 +41,19 @@ export const TeenDashboard = ({ navigation }: any) => {
       try {
         const currentUser = await getCurrentUser();
         if (currentUser) {
-          let { data: teenData } = await supabase
-            .from('teens')
-            .select('*')
-            .eq('user_uid', currentUser.id)
-            .maybeSingle();
+          let teenData = await getTeenByUserUid(currentUser.id);
 
           if (!teenData) {
-            const { data: newTeen } = await supabase
-              .from('teens')
-              .insert({
-                user_uid: currentUser.id,
-                name: currentUser.profile?.name || currentUser.user_metadata?.full_name || 'Teen Rider',
-                speed_limit: 80,
-                curfew_start: '22:00',
-                curfew_end: '06:00',
-                safety_score: 100,
-                is_driving: false,
-                streak_days: 0
-              })
-              .select()
-              .single();
-            teenData = newTeen;
+            teenData = await createTeenProfile({
+              user_uid: currentUser.id,
+              name: currentUser.profile?.name || currentUser.user_metadata?.full_name || 'Teen Rider',
+              speed_limit: 80,
+              curfew_start: '22:00',
+              curfew_end: '06:00',
+              safety_score: 100,
+              is_driving: false,
+              streak_days: 0
+            });
           }
 
           if (teenData) {
