@@ -44,6 +44,48 @@ export const getTeen = async (teenId: string): Promise<Teen | null> => {
   return data;
 };
 
+export const getTeenByUserUid = async (userUid: string): Promise<Teen | null> => {
+  if (TEST_MODE) {
+    return testTeens.find(t => t.user_uid === userUid) || null;
+  }
+
+  const { data, error } = await supabase
+    .from('teens')
+    .select('*')
+    .eq('user_uid', userUid)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+export const createTeenProfile = async (teen: Partial<Teen>): Promise<Teen> => {
+  if (TEST_MODE) {
+    const newTeen: Teen = {
+      teen_id: 'teen-' + Math.random().toString(36).substr(2, 9),
+      parent_uid: teen.parent_uid || 'parent-001',
+      user_uid: teen.user_uid,
+      name: teen.name || 'Teen Rider',
+      speed_limit: teen.speed_limit || 80,
+      curfew_start: teen.curfew_start || '22:00',
+      curfew_end: teen.curfew_end || '06:00',
+      safety_score: 100,
+      is_driving: false,
+      streak_days: 0,
+      ...teen,
+    };
+    testTeens.push(newTeen);
+    return newTeen;
+  }
+
+  const { data, error } = await supabase
+    .from('teens')
+    .insert(teen)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
 export const updateTeenLocation = async (teenId: string, lat: number, lng: number, speed: number, heading: number = 0) => {
   if (TEST_MODE) {
     testTeens = testTeens.map(t =>
