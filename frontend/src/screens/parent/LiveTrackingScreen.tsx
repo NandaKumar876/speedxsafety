@@ -192,14 +192,16 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
             const dy = (point.y - prev.y) * SCREEN_HEIGHT * 0.65;
             const length = Math.sqrt(dx * dx + dy * dy);
             const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            const midX = (prev.x + point.x) * 0.5 * SCREEN_WIDTH;
+            const midY = (prev.y + point.y) * 0.5 * SCREEN_HEIGHT * 0.65;
             return (
               <View
                 key={idx}
                 style={[
                   styles.routeSegment,
                   {
-                    left: prev.x * SCREEN_WIDTH,
-                    top: prev.y * SCREEN_HEIGHT * 0.65,
+                    left: midX - length / 2,
+                    top: midY - 3.5 / 2,
                     width: length,
                     backgroundColor: segColor + '90',
                     transform: [{ rotate: `${angle}deg` }],
@@ -367,7 +369,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     height: 3.5,
     borderRadius: 2,
-    transformOrigin: 'left center',
   },
   startMarker: {
     position: 'absolute',
