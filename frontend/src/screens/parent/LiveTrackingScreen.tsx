@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { scaleWidth, scaleHeight, scaleFont, getSafeAreaBottom } from '../../utils/responsive';
+import { scaleWidth, scaleHeight, scaleFont, getSafeAreaBottom, getSafeAreaTop } from '../../utils/responsive';
 import { AmbientGlow } from '../../components/common/SpatialComponents';
 import { canUseNativeDriver } from '../../utils/platform';
 
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   },
   topBar: {
     position: 'absolute',
-    top: scaleHeight(55),
+    top: getSafeAreaTop() + 12,
     left: Spacing.lg,
     right: Spacing.lg,
     flexDirection: 'row',
