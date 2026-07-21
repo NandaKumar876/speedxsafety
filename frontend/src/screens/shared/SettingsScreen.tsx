@@ -12,6 +12,7 @@ import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
 import { AmbientGlow } from '../../components/common/SpatialComponents';
 import { getTeens } from '../../services/dataService';
 import { getCurrentUser, signOut } from '../../services/authService';
+import { CommonActions } from '@react-navigation/native';
 
 export const SettingsScreen = ({ navigation }: any) => {
   const [user, setUser] = useState<any>(null);
@@ -43,11 +44,15 @@ export const SettingsScreen = ({ navigation }: any) => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigation.replace('RoleSelect');
     } catch (err) {
       console.warn('Sign out failed:', err);
-      navigation.replace('RoleSelect');
     }
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'RoleSelect' }],
+      })
+    );
   };
 
   const SettingRow = ({ icon, iconColor, title, subtitle, right }: any) => (
