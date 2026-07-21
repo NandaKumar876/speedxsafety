@@ -3,7 +3,7 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard, GradientButton } from '../../components/common';
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   mapGrid: { ...StyleSheet.absoluteFillObject },
   gridLineH: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
   gridLineV: { position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(108, 99, 255, 0.04)' },
-  zoneCircle: { position: 'absolute', borderWidth: 2, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
+  zoneCircle: { position: 'absolute', borderWidth: 2, borderStyle: Platform.OS === 'web' ? 'solid' : 'dashed', justifyContent: 'center', alignItems: 'center' },
   zoneLabel: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
   mapOverlay: {
     position: 'absolute', bottom: Spacing.md, right: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: 4,
