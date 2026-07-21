@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../../components/common';
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from '../../constants/theme';
-import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { scaleWidth, scaleHeight, scaleFont, getSafeAreaTop } from '../../utils/responsive';
 import { getAlerts, markAllAlertsRead } from '../../services/dataService';
 import { AmbientGlow } from '../../components/common/SpatialComponents';
 
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { 
     paddingHorizontal: Spacing.xl, 
-    paddingTop: scaleHeight(55), 
+    paddingTop: getSafeAreaTop() + 12, 
     paddingBottom: scaleHeight(110),
     alignSelf: 'center',
     width: '100%',
