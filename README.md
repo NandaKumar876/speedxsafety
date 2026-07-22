@@ -1,4 +1,4 @@
-# SpeedxSafety Monorepo
+## SpeedxSafety Monorepo
 
 SpeedxSafety is a premium, real-time safety monitoring mobile application designed for teen riders and their parents. This repository is organized as a monorepo containing the frontend mobile application and database schemas.
 
