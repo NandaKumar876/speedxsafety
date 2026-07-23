@@ -173,7 +173,7 @@ export const ReportsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  sc: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
+  sc: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 1000 },
   title:{fontSize:FontSize.xxl,fontWeight:FontWeight.bold,color:Colors.textPrimary, letterSpacing: -0.5},
   date:{fontSize:FontSize.sm,color:Colors.textTertiary,marginTop:4,marginBottom:Spacing.xxl},
   gradeCard:{marginBottom:Spacing.xxl,padding:Spacing.xl},
@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
   gradeText:{fontSize:FontSize.xxxl,fontWeight:FontWeight.heavy},
   gradeLabel:{fontSize:FontSize.xs,color:Colors.textTertiary,textTransform:'uppercase',letterSpacing:1},
   gradeDesc:{fontSize:FontSize.md,color:Colors.textSecondary,marginTop:4,lineHeight:22},
-  statsGrid:{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',rowGap:Spacing.md,marginBottom:Spacing.xxl},
-  statItem:{width:'48%',alignItems:'center',padding:Spacing.lg},
+  statsGrid:{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',gap:Spacing.md,marginBottom:Spacing.xxl},
+  statItem:{flex:1,minWidth:150,alignItems:'center',padding:Spacing.lg},
   statIconBg:{width:scaleWidth(34),height:scaleWidth(34),borderRadius:scaleWidth(10),justifyContent:'center',alignItems:'center',marginBottom:Spacing.xs},
   statVal:{fontSize:FontSize.xxl,fontWeight:FontWeight.heavy},
   statLbl:{fontSize:FontSize.xs,color:Colors.textTertiary,marginTop:2,textTransform:'uppercase',letterSpacing:0.5},
