@@ -268,79 +268,81 @@ export const LiveTrackingScreen = ({ navigation }: any) => {
       </View>
 
       {/* Bottom info panel (Floating Spatial Panel) */}
-      <Animated.View style={[styles.bottomPanel, { opacity: panelFade }]}>
-        <BlurView intensity={50} tint="dark" style={styles.bottomPanelBlur}>
-          
-          {/* Speed indicator with premium details */}
-          <GlassCard style={[styles.speedCard, { borderColor: statusColor + '30', backgroundColor: 'rgba(255, 255, 255, 0.02)' }]}>
-            <View style={styles.speedRow}>
-              <View style={styles.speedMain}>
-                <Text style={[styles.speedValue, { color: statusColor }, Shadow.glowSoft(statusColor)]}>
-                  {Math.round(currentSpeed)}
-                </Text>
-                <Text style={styles.speedUnit}>km/h</Text>
-              </View>
-              <View style={styles.speedDivider} />
-              <View style={styles.speedLimitSection}>
-                <Text style={styles.limitLabel}>LIMIT</Text>
-                <View style={styles.limitBadge}>
-                  <Text style={styles.limitValue}>{SPEED_LIMIT}</Text>
+      <View style={styles.bottomPanelWrapper} pointerEvents="box-none">
+        <Animated.View style={[styles.bottomPanel, { opacity: panelFade }]}>
+          <BlurView intensity={50} tint="dark" style={styles.bottomPanelBlur}>
+            
+            {/* Speed indicator with premium details */}
+            <GlassCard style={[styles.speedCard, { borderColor: statusColor + '30', backgroundColor: 'rgba(255, 255, 255, 0.02)' }]}>
+              <View style={styles.speedRow}>
+                <View style={styles.speedMain}>
+                  <Text style={[styles.speedValue, { color: statusColor }, Shadow.glowSoft(statusColor)]}>
+                    {Math.round(currentSpeed)}
+                  </Text>
+                  <Text style={styles.speedUnit}>km/h</Text>
+                </View>
+                <View style={styles.speedDivider} />
+                <View style={styles.speedLimitSection}>
+                  <Text style={styles.limitLabel}>LIMIT</Text>
+                  <View style={styles.limitBadge}>
+                    <Text style={styles.limitValue}>{SPEED_LIMIT}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-            {isOverLimit && (
-              <View style={styles.warningBanner}>
-                <Ionicons name="warning" size={14} color={Colors.danger} />
-                <Text style={styles.warningText}>Speed limit exceeded!</Text>
-              </View>
-            )}
-          </GlassCard>
+              {isOverLimit && (
+                <View style={styles.warningBanner}>
+                  <Ionicons name="warning" size={14} color={Colors.danger} />
+                  <Text style={styles.warningText}>Speed limit exceeded!</Text>
+                </View>
+              )}
+            </GlassCard>
 
-          {/* Trip stats grid */}
-          <View style={styles.tripStats}>
-            <View style={styles.tripStat}>
-              <View style={[styles.statIconContainer, { backgroundColor: Colors.primary + '15' }]}>
-                <Ionicons name="time" size={16} color={Colors.primaryLight} />
+            {/* Trip stats grid */}
+            <View style={styles.tripStats}>
+              <View style={styles.tripStat}>
+                <View style={[styles.statIconContainer, { backgroundColor: Colors.primary + '15' }]}>
+                  <Ionicons name="time" size={16} color={Colors.primaryLight} />
+                </View>
+                <Text style={styles.tripStatValue}>{minutes}:{seconds.toString().padStart(2, '0')}</Text>
+                <Text style={styles.tripStatLabel}>Duration</Text>
               </View>
-              <Text style={styles.tripStatValue}>{minutes}:{seconds.toString().padStart(2, '0')}</Text>
-              <Text style={styles.tripStatLabel}>Duration</Text>
-            </View>
-            <View style={styles.tripStatDivider} />
-            <View style={styles.tripStat}>
-              <View style={[styles.statIconContainer, { backgroundColor: Colors.safe + '15' }]}>
-                <Ionicons name="navigate" size={16} color={Colors.safeLight} />
+              <View style={styles.tripStatDivider} />
+              <View style={styles.tripStat}>
+                <View style={[styles.statIconContainer, { backgroundColor: Colors.safe + '15' }]}>
+                  <Ionicons name="navigate" size={16} color={Colors.safeLight} />
+                </View>
+                <Text style={styles.tripStatValue}>{distance}</Text>
+                <Text style={styles.tripStatLabel}>km</Text>
               </View>
-              <Text style={styles.tripStatValue}>{distance}</Text>
-              <Text style={styles.tripStatLabel}>km</Text>
-            </View>
-            <View style={styles.tripStatDivider} />
-            <View style={styles.tripStat}>
-              <View style={[styles.statIconContainer, { backgroundColor: (isOverLimit ? Colors.danger : Colors.safe) + '15' }]}>
-                <Ionicons name={isOverLimit ? 'warning' : 'shield-checkmark'} size={16} color={isOverLimit ? Colors.dangerLight : Colors.safeLight} />
+              <View style={styles.tripStatDivider} />
+              <View style={styles.tripStat}>
+                <View style={[styles.statIconContainer, { backgroundColor: (isOverLimit ? Colors.danger : Colors.safe) + '15' }]}>
+                  <Ionicons name={isOverLimit ? 'warning' : 'shield-checkmark'} size={16} color={isOverLimit ? Colors.dangerLight : Colors.safeLight} />
+                </View>
+                <Text style={[styles.tripStatValue, { color: isOverLimit ? Colors.danger : Colors.safe }]}>
+                  {isOverLimit ? 'ALERT' : 'SAFE'}
+                </Text>
+                <Text style={styles.tripStatLabel}>Status</Text>
               </View>
-              <Text style={[styles.tripStatValue, { color: isOverLimit ? Colors.danger : Colors.safe }]}>
-                {isOverLimit ? 'ALERT' : 'SAFE'}
-              </Text>
-              <Text style={styles.tripStatLabel}>Status</Text>
             </View>
-          </View>
 
-          {/* Rider info */}
-          <View style={styles.riderInfo}>
-            <LinearGradient colors={['#7C3AED', '#A855F7']} style={styles.riderAvatar}>
-              <Text style={styles.riderInitial}>A</Text>
-            </LinearGradient>
-            <View style={styles.riderDetails}>
-              <Text style={styles.riderName}>Alex Johnson</Text>
-              <Text style={styles.riderRoute}>Home → School</Text>
+            {/* Rider info */}
+            <View style={styles.riderInfo}>
+              <LinearGradient colors={['#7C3AED', '#A855F7']} style={styles.riderAvatar}>
+                <Text style={styles.riderInitial}>A</Text>
+              </LinearGradient>
+              <View style={styles.riderDetails}>
+                <Text style={styles.riderName}>Alex Johnson</Text>
+                <Text style={styles.riderRoute}>Home → School</Text>
+              </View>
+              <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
+                <Ionicons name="call" size={18} color={Colors.safe} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.callBtn} activeOpacity={0.8}>
-              <Ionicons name="call" size={18} color={Colors.safe} />
-            </TouchableOpacity>
-          </View>
 
-        </BlurView>
-      </Animated.View>
+          </BlurView>
+        </Animated.View>
+      </View>
     </View>
   );
 };
@@ -406,8 +408,12 @@ const styles = StyleSheet.create({
   topBar: {
     position: 'absolute',
     top: getSafeAreaTop() + 12,
-    left: Spacing.lg,
-    right: Spacing.lg,
+    left: 0,
+    right: 0,
+    paddingHorizontal: Spacing.lg,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -453,11 +459,17 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderMedium,
     ...Shadow.sm,
   },
-  bottomPanel: {
+  bottomPanelWrapper: {
     position: 'absolute',
     bottom: getSafeAreaBottom() + scaleHeight(12),
-    left: Spacing.lg,
-    right: Spacing.lg,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  bottomPanel: {
+    width: '100%',
+    maxWidth: 800,
     borderRadius: BorderRadius.xxl,
     borderWidth: 1.5,
     borderColor: Colors.borderMedium,
