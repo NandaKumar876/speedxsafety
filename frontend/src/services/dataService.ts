@@ -150,6 +150,8 @@ export const createTrip = async (trip: Partial<Trip>) => {
       max_speed: trip.max_speed || 0,
       avg_speed: trip.avg_speed || 0,
       distance_km: trip.distance_km || 0,
+      start_lat: trip.start_lat || 0,
+      start_lng: trip.start_lng || 0,
       safety_grade: trip.safety_grade || 'A',
       violations: trip.violations || 0,
       ...trip,
