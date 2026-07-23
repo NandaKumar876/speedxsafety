@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     paddingBottom: scaleHeight(110),
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 800,
+    maxWidth: 1100,
   },
   headerCard: {
     marginBottom: Spacing.xl,
@@ -293,7 +293,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statCard: {
-    width: '47.5%' as any,
+    flex: 1,
+    minWidth: 150,
     alignItems: 'center',
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.sm,
