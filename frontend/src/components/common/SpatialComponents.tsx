@@ -571,15 +571,20 @@ const tabBarStyles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
     bottom: getSafeAreaBottom() + 6,
-    left: TabBar.marginHorizontal,
-    right: TabBar.marginHorizontal,
-    ...Shadow.tabBar,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: TabBar.marginHorizontal,
+    zIndex: 999,
   },
   blurContainer: {
+    width: '100%',
+    maxWidth: 600,
     borderRadius: TabBar.borderRadius,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.borderMedium,
+    ...Shadow.tabBar,
   },
   container: {
     flexDirection: 'row',
