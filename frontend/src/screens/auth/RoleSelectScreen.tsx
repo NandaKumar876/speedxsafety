@@ -184,6 +184,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.xxl,
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
   },
   logoSection: {
     alignItems: 'center',
