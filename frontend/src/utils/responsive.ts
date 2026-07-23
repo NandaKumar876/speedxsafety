@@ -6,83 +6,101 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BASE_WIDTH = 393;
 const BASE_HEIGHT = 852;
 
-const widthScale = SCREEN_WIDTH / BASE_WIDTH;
-const heightScale = SCREEN_HEIGHT / BASE_HEIGHT;
+const getWindowDimensions = () => Dimensions.get('window');
 
-/**
- * Scales a width or horizontal value based on the current screen width.
- */
-export const scaleWidth = (size: number): number => {
-  const newSize = size * widthScale;
-  return Math.round(PixelRatio.roundToNearestPixel(newSize));
+const getCappedWidthScale = (width: number): number => {
+  if (width > 480) {
+    return Math.min(width / BASE_WIDTH, 1.15);
+  }
+  return width / BASE_WIDTH;
+};
+
+const getCappedHeightScale = (height: number, width: number): number => {
+  if (width > 480 || height > 900) {
+    return Math.min(height / BASE_HEIGHT, 1.15);
+  }
+  return height / BASE_HEIGHT;
 };
 
 /**
- * Scales a height or vertical value based on the current screen height.
+ * Scales a width or horizontal value based on current screen width (capped for desktop/tablets).
+ */
+export const scaleWidth = (size: number): number => {
+  const { width } = getWindowDimensions();
+  const scale = getCappedWidthScale(width);
+  return Math.round(PixelRatio.roundToNearestPixel(size * scale));
+};
+
+/**
+ * Scales a height or vertical value based on current screen height (capped for desktop/tablets).
  */
 export const scaleHeight = (size: number): number => {
-  const newSize = size * heightScale;
-  return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  const { width, height } = getWindowDimensions();
+  const scale = getCappedHeightScale(height, width);
+  return Math.round(PixelRatio.roundToNearestPixel(size * scale));
 };
 
 /**
  * Moderate scale — width-based with dampening factor.
- * Better for font sizes and elements that shouldn't scale linearly.
  */
 export const moderateScale = (size: number, factor: number = 0.5): number => {
-  const newSize = size + (widthScale - 1) * factor * size;
+  const { width } = getWindowDimensions();
+  const scale = getCappedWidthScale(width);
+  const newSize = size + (scale - 1) * factor * size;
   return Math.round(PixelRatio.roundToNearestPixel(newSize));
 };
 
 /**
- * Scales a font size based on screen width, with capped scaling on tablets to avoid oversized text.
+ * Scales a font size based on screen width, capped on desktop/tablets to avoid oversized text.
  */
 export const scaleFont = (size: number): number => {
-  if (SCREEN_WIDTH > 500) {
-    // For tablets or wider screens, cap the text growth factor
+  const { width } = getWindowDimensions();
+  if (width > 500) {
     return Math.round(PixelRatio.roundToNearestPixel(size * 1.15));
   }
-  const newSize = size * widthScale;
-  return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  const scale = getCappedWidthScale(width);
+  return Math.round(PixelRatio.roundToNearestPixel(size * scale));
 };
 
 /**
  * Calculates a value as a percentage of the screen width.
  */
 export const widthPercent = (percent: number): number => {
-  return (percent * SCREEN_WIDTH) / 100;
+  return (percent * getWindowDimensions().width) / 100;
 };
 
 /**
  * Calculates a value as a percentage of the screen height.
  */
 export const heightPercent = (percent: number): number => {
-  return (percent * SCREEN_HEIGHT) / 100;
+  return (percent * getWindowDimensions().height) / 100;
 };
 
 /**
  * Safe area utilities for Dynamic Island, notch, and punch-hole cameras
  */
 export const getSafeAreaTop = (): number => {
+  const { height, width } = getWindowDimensions();
+  if (Platform.OS === 'web') {
+    return 16;
+  }
   if (Platform.OS === 'ios') {
-    // iPhone 15 Pro / Dynamic Island
-    if (SCREEN_HEIGHT >= 852) return 59;
-    // iPhone with notch (X, 11, 12, 13, 14)
-    if (SCREEN_HEIGHT >= 812) return 47;
-    // Older iPhones
+    if (height >= 852) return 59;
+    if (height >= 812) return 47;
     return 20;
   }
-  // Android — use StatusBar height + extra padding for punch-hole
   return (StatusBar.currentHeight || 24) + 8;
 };
 
 export const getSafeAreaBottom = (): number => {
+  const { height, width } = getWindowDimensions();
+  if (Platform.OS === 'web') {
+    return 16;
+  }
   if (Platform.OS === 'ios') {
-    // Devices with home indicator
-    if (SCREEN_HEIGHT >= 812) return 34;
+    if (height >= 812) return 34;
     return 0;
   }
-  // Android
   return 8;
 };
 
@@ -90,19 +108,16 @@ export const getSafeAreaBottom = (): number => {
  * Adaptive spacing based on device category
  */
 export const getAdaptiveSpacing = () => {
-  if (SCREEN_WIDTH < 340) {
-    // Small phone — tighter spacing
+  const { width } = getWindowDimensions();
+  if (width < 340) {
     return { horizontal: 16, vertical: 12, cardGap: 10 };
   }
-  if (SCREEN_WIDTH < 400) {
-    // Standard phone
+  if (width < 400) {
     return { horizontal: 20, vertical: 16, cardGap: 12 };
   }
-  if (SCREEN_WIDTH < 480) {
-    // Large phone
+  if (width < 480) {
     return { horizontal: 24, vertical: 20, cardGap: 16 };
   }
-  // Tablet+
   return { horizontal: 32, vertical: 24, cardGap: 20 };
 };
 
@@ -110,6 +125,7 @@ export const getAdaptiveSpacing = () => {
  * Returns responsive layout helpers for the current screen size.
  */
 export const getResponsiveInfo = () => {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = getWindowDimensions();
   return {
     screenWidth: SCREEN_WIDTH,
     screenHeight: SCREEN_HEIGHT,
@@ -128,7 +144,8 @@ export const getResponsiveInfo = () => {
  * Calculate dynamic card width for grid layouts
  */
 export const getCardWidth = (columns: number, gap: number, padding: number): number => {
-  const availableWidth = SCREEN_WIDTH - (padding * 2) - (gap * (columns - 1));
+  const { width } = getWindowDimensions();
+  const availableWidth = width - (padding * 2) - (gap * (columns - 1));
   return availableWidth / columns;
 };
 
@@ -153,25 +170,22 @@ export const useResponsive = () => {
   const width = dims.width;
   const height = dims.height;
 
-  const widthScale = width / BASE_WIDTH;
-  const heightScale = height / BASE_HEIGHT;
+  const wScale = getCappedWidthScale(width);
+  const hScale = getCappedHeightScale(height, width);
 
   const dScaleWidth = (size: number): number => {
-    const newSize = size * widthScale;
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+    return Math.round(PixelRatio.roundToNearestPixel(size * wScale));
   };
 
   const dScaleHeight = (size: number): number => {
-    const newSize = size * heightScale;
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+    return Math.round(PixelRatio.roundToNearestPixel(size * hScale));
   };
 
   const dScaleFont = (size: number): number => {
     if (width > 500) {
       return Math.round(PixelRatio.roundToNearestPixel(size * 1.15));
     }
-    const newSize = size * widthScale;
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+    return Math.round(PixelRatio.roundToNearestPixel(size * wScale));
   };
 
   const isMobile = width < 480;
@@ -197,4 +211,5 @@ export const useResponsive = () => {
   };
 };
 
-export { SCREEN_WIDTH, SCREEN_HEIGHT };
+export const SCREEN_WIDTH = Dimensions.get('window').width;
+export const SCREEN_HEIGHT = Dimensions.get('window').height;
