@@ -1,7 +1,5 @@
 import { Dimensions, PixelRatio, Platform, StatusBar } from 'react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 // Baseline dimensions based on a standard modern mobile screen (e.g., iPhone 15)
 const BASE_WIDTH = 393;
 const BASE_HEIGHT = 852;
