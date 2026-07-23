@@ -214,7 +214,7 @@ export const SettingsScreen = ({ navigation }: any) => {
 };
 
 const s = StyleSheet.create({
-  sc: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(110), alignSelf: 'center', width: '100%', maxWidth: 800 },
+  sc: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(110), alignSelf: 'center', width: '100%', maxWidth: 900 },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.xl },
   glowOverlay: {
     position: 'absolute',
