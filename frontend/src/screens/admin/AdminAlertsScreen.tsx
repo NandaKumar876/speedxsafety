@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     paddingBottom: scaleHeight(110),
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 800,
+    maxWidth: 1100,
   },
   headerRow: { 
     flexDirection: 'row', 
