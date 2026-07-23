@@ -151,7 +151,7 @@ export const BadgesScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 800 },
+  scrollContent: { paddingHorizontal: Spacing.xl, paddingTop: getSafeAreaTop() + 12, paddingBottom: scaleHeight(120), alignSelf: 'center', width: '100%', maxWidth: 1000 },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.xxl, letterSpacing: -0.5 },
   streakCard: { marginBottom: Spacing.xxl, padding: Spacing.xl },
   streakTopRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg, marginBottom: Spacing.lg },
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
   statValue: { fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   statLabel: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: 1 },
   sectionTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.lg },
-  badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: Spacing.md },
-  badgeCard: { width: '48%', padding: Spacing.md, minHeight: scaleHeight(165) },
+  badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: Spacing.md },
+  badgeCard: { flex: 1, minWidth: 200, padding: Spacing.md, minHeight: scaleHeight(165) },
   badgeCardLocked: { opacity: 0.65 },
   badgeIconContainer: { width: scaleWidth(44), height: scaleWidth(44), borderRadius: scaleWidth(14), backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.md },
   badgeIconEarned: { backgroundColor: Colors.safeMuted },
