@@ -206,7 +206,10 @@ const styles = StyleSheet.create({
   scrollContent: { 
     paddingHorizontal: Spacing.xl, 
     paddingTop: getSafeAreaTop() + 12, 
-    paddingBottom: scaleHeight(110) 
+    paddingBottom: scaleHeight(110),
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 1100,
   },
   title: { 
     fontSize: FontSize.xxl, 
