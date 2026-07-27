@@ -13,13 +13,12 @@ import { Springs, Duration } from '../../constants/spatial';
 import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive';
 import { canUseNativeDriver } from '../../utils/platform';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
-import { signInWithGoogle } from '../../services/authService';
-import { supabase } from '../../services/supabase';
+import { signIn, signInWithEmail } from '../../services/authService';
 
 export const ParentLoginScreen = ({ navigation, route }: any) => {
   const isAdmin = route?.params?.isAdmin;
-  const [email, setEmail] = useState(isAdmin ? 'tony' : '');
-  const [password, setPassword] = useState(isAdmin ? 'stark' : '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const { height } = useWindowDimensions();
@@ -68,26 +67,30 @@ export const ParentLoginScreen = ({ navigation, route }: any) => {
     outputRange: [0, -6],
   });
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setErrorMsg('');
-    const adminUser = process.env.EXPO_PUBLIC_ADMIN_USERNAME || 'tony';
-    const adminPass = process.env.EXPO_PUBLIC_ADMIN_PASSWORD || 'stark';
 
     if (email.trim() === '' || password.trim() === '') {
-      setErrorMsg('Please enter both username and password');
-      return;
-    }
-
-    if (email.trim() !== adminUser || password !== adminPass) {
-      setErrorMsg('Invalid admin username or password');
+      setErrorMsg('Please enter both email and password');
       return;
     }
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const data = await signIn(email.trim(), password);
+      // Verify the user has admin role
+      const userRole = data?.user?.user_metadata?.role;
+      if (isAdmin && userRole !== 'admin') {
+        setErrorMsg('This account does not have admin privileges');
+        setLoading(false);
+        return;
+      }
       setLoading(false);
       navigation.replace('AdminTabs');
-    }, 1200);
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMsg(err.message || 'Invalid email or password');
+    }
   };
 
   const handleGoogleLoginPress = () => {
@@ -117,80 +120,19 @@ export const ParentLoginScreen = ({ navigation, route }: any) => {
     setLoading(true);
 
     try {
-      const emailVal = googleEmail.trim().toLowerCase();
-      const nameVal = googleName.trim();
-      const roleVal = isAdmin ? 'admin' : 'parent';
-      const dummyPassword = 'DefaultDummyPassword123!';
-
-      // Try sign in
-      try {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: emailVal,
-          password: dummyPassword,
-        });
-
-        if (signInError) {
-          // Check if user is not found or has invalid credentials (which means we should sign up)
-          if (signInError.message.includes('Invalid login credentials') || signInError.message.includes('User not found')) {
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email: emailVal,
-              password: dummyPassword,
-              options: {
-                data: {
-                  name: nameVal,
-                  role: roleVal,
-                },
-              },
-            });
-
-            if (signUpError) throw signUpError;
-
-            // Manual profile creation fallback in case database triggers are not present or failed
-            if (signUpData.user) {
-              const { error: profileError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: signUpData.user.id,
-                  email: emailVal,
-                  name: nameVal,
-                  role: roleVal,
-                  is_active: true,
-                });
-              if (profileError && !profileError.message.includes('relation "profiles" does not exist')) {
-                console.warn('Profile creation error during signup fallback:', profileError);
-              }
-            }
-          } else {
-            throw signInError;
-          }
-        } else {
-          // Signed in successfully. Let's make sure the profile is in place
-          if (signInData.user) {
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                id: signInData.user.id,
-                email: emailVal,
-                name: nameVal,
-                role: roleVal,
-                is_active: true,
-              });
-            // Safe to ignore if it already exists (duplicate key error) or relation is missing
-            if (profileError && !profileError.message.includes('duplicate key') && !profileError.message.includes('relation "profiles" does not exist')) {
-              console.warn('Profile sync on signin warning:', profileError);
-            }
-          }
-        }
-      } catch (innerErr: any) {
-        throw innerErr;
-      }
+      const roleVal: 'admin' | 'parent' | 'teen' = isAdmin ? 'admin' : 'parent';
+      await signInWithEmail(
+        googleEmail.trim().toLowerCase(),
+        googleName.trim(),
+        roleVal
+      );
 
       setLoading(false);
       setGoogleModalVisible(false);
       navigation.replace(isAdmin ? 'AdminTabs' : 'ParentTabs');
     } catch (err: any) {
       setLoading(false);
-      setGoogleError(err.message || 'Google Sign-In failed. Please try again.');
+      setGoogleError(err.message || 'Sign-in failed. Please try again.');
     }
   };
 
@@ -225,10 +167,11 @@ export const ParentLoginScreen = ({ navigation, route }: any) => {
             {isAdmin ? (
               <GlassCard elevation="floating" style={{ padding: Spacing.xl }}>
                 <GlassInput
-                  placeholder="Username"
+                  placeholder="Admin Email"
                   value={email}
                   onChangeText={setEmail}
-                  icon={<Ionicons name="person-outline" size={18} color={Colors.textTertiary} />}
+                  keyboardType="email-address"
+                  icon={<Ionicons name="mail-outline" size={18} color={Colors.textTertiary} />}
                 />
                 <View style={{ height: Spacing.md }} />
                 <GlassInput
