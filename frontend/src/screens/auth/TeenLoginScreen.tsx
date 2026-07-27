@@ -13,7 +13,7 @@ import { scaleWidth, scaleHeight, getSafeAreaTop } from '../../utils/responsive'
 import { canUseNativeDriver } from '../../utils/platform';
 import { GlassInput, GlassCard } from '../../components/common';
 import { FloatingOrbs } from '../../components/common/SpatialComponents';
-import { supabase } from '../../services/supabase';
+import { signInWithEmail } from '../../services/authService';
 
 export const TeenLoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
@@ -106,80 +106,18 @@ export const TeenLoginScreen = ({ navigation }: any) => {
     setLoading(true);
 
     try {
-      const emailVal = googleEmail.trim().toLowerCase();
-      const nameVal = googleName.trim();
-      const roleVal = 'teen';
-      const dummyPassword = 'DefaultDummyPassword123!';
-
-      // Try sign in
-      try {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: emailVal,
-          password: dummyPassword,
-        });
-
-        if (signInError) {
-          // Check if user is not found or has invalid credentials (which means we should sign up)
-          if (signInError.message.includes('Invalid login credentials') || signInError.message.includes('User not found')) {
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email: emailVal,
-              password: dummyPassword,
-              options: {
-                data: {
-                  name: nameVal,
-                  role: roleVal,
-                },
-              },
-            });
-
-            if (signUpError) throw signUpError;
-
-            // Manual profile creation fallback in case database triggers are not present or failed
-            if (signUpData.user) {
-              const { error: profileError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: signUpData.user.id,
-                  email: emailVal,
-                  name: nameVal,
-                  role: roleVal,
-                  is_active: true,
-                });
-              if (profileError && !profileError.message.includes('relation "profiles" does not exist')) {
-                console.warn('Profile creation error during signup fallback:', profileError);
-              }
-            }
-          } else {
-            throw signInError;
-          }
-        } else {
-          // Signed in successfully. Let's make sure the profile is in place
-          if (signInData.user) {
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                id: signInData.user.id,
-                email: emailVal,
-                name: nameVal,
-                role: roleVal,
-                is_active: true,
-              });
-            // Safe to ignore if it already exists (duplicate key error) or relation is missing
-            if (profileError && !profileError.message.includes('duplicate key') && !profileError.message.includes('relation "profiles" does not exist')) {
-              console.warn('Profile sync on signin warning:', profileError);
-            }
-          }
-        }
-      } catch (innerErr: any) {
-        throw innerErr;
-      }
+      await signInWithEmail(
+        googleEmail.trim().toLowerCase(),
+        googleName.trim(),
+        'teen'
+      );
 
       setLoading(false);
       setGoogleModalVisible(false);
       navigation.replace('TeenTabs');
     } catch (err: any) {
       setLoading(false);
-      setGoogleError(err.message || 'Google Sign-In failed. Please try again.');
+      setGoogleError(err.message || 'Sign-in failed. Please try again.');
     }
   };
 
