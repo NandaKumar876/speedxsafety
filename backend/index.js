@@ -25,7 +25,7 @@ const badgesRoutes = require('./routes/badges');
 const reportsRoutes = require('./routes/reports');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // ── Global Middleware ────────────────────────
 const corsOrigins = process.env.CORS_ORIGINS
@@ -128,7 +128,7 @@ if (process.env.NODE_ENV !== 'production') {
 
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        const nextPort = port + 1;
+        const nextPort = Number(port) + 1;
         console.error(`\n⚠️  Port ${port} is already in use.`);
         console.error(`   To find the blocking process, run:`);
         console.error(`     netstat -ano | findstr :${port}   (Windows)`);
