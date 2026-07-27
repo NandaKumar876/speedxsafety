@@ -13,10 +13,10 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
   const { name, email, role, password } = req.body;
 
-  if (!name || !email || !role) {
+  if (!name || !email || !role || !password) {
     return res.status(400).json({
       error: 'Validation Error',
-      message: 'Fields name, email, and role are required',
+      message: 'Fields name, email, role, and password are required',
     });
   }
 
@@ -45,7 +45,7 @@ router.post('/register', async (req, res) => {
     // Sign up via Supabase Auth
     const { data: authData, error: signUpError } = await req.supabase.auth.signUp({
       email: email.toLowerCase(),
-      password: password || 'DefaultDummyPassword123!',
+      password,
       options: {
         data: {
           name,
@@ -56,32 +56,26 @@ router.post('/register', async (req, res) => {
 
     if (signUpError) throw signUpError;
 
-    // Check if trigger created the profile, if not insert manually
+    // Check if trigger created the profile, if not upsert
     let profile = null;
     if (authData.user) {
-      const { data: profData } = await req.supabase
+      const { data: profData, error: upsertError } = await req.supabase
         .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .maybeSingle();
-
-      if (!profData) {
-        const { data: newProf, error: insError } = await req.supabase
-          .from('profiles')
-          .insert({
+        .upsert(
+          {
             id: authData.user.id,
             email: email.toLowerCase(),
             name,
             role,
             is_active: true,
-          })
-          .select()
-          .single();
-        if (insError) console.warn('Manual profile creation error:', insError);
-        profile = newProf;
-      } else {
-        profile = profData;
-      }
+          },
+          { onConflict: 'id' }
+        )
+        .select()
+        .single();
+
+      if (upsertError) console.warn('Profile upsert warning:', upsertError);
+      profile = profData;
     }
 
     res.status(201).json({
@@ -110,17 +104,17 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email) {
+  if (!email || !password) {
     return res.status(400).json({
       error: 'Validation Error',
-      message: 'Email is required',
+      message: 'Email and password are required',
     });
   }
 
   try {
     const { data, error } = await req.supabase.auth.signInWithPassword({
       email: email.toLowerCase(),
-      password: password || 'DefaultDummyPassword123!',
+      password,
     });
 
     if (error) {
