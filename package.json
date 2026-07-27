@@ -5,13 +5,15 @@
   "private": true,
   "scripts": {
     "install:all": "npm install --prefix frontend && npm install --prefix backend",
+    "predev": "npx kill-port 3000 8081",
     "dev:frontend": "npm run web --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend && node -e \"const fs = require('fs'); fs.rmSync('public', {recursive:true, force:true}); fs.cpSync('frontend/dist', 'public', {recursive:true});\""
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "kill-port": "^2.0.1"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
