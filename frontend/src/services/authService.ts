@@ -7,6 +7,18 @@ import { UserRole } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
+ * Helper to normalize raw network errors into user-friendly messages.
+ */
+const handleAuthError = (error: any) => {
+  if (!error) return new Error('An unknown authentication error occurred');
+  const message = error.message || String(error);
+  if (message.includes('Failed to fetch') || message.includes('NetworkError') || message.includes('fetch failed')) {
+    return new Error('Unable to connect to authentication server. Please check your connection or enable TEST_MODE.');
+  }
+  return error instanceof Error ? error : new Error(message);
+};
+
+/**
  * Sign up a new user with role metadata
  */
 export const signUp = async (email: string, password: string, role: UserRole, name: string) => {
@@ -20,38 +32,42 @@ export const signUp = async (email: string, password: string, role: UserRole, na
     return { user: mockUser };
   }
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        role,
-      },
-    },
-  });
-
-  if (error) throw error;
-
-  // Upsert profile record (handles race with database trigger)
-  if (data.user) {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          id: data.user.id,
-          email,
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
           name,
           role,
-          is_active: true,
         },
-        { onConflict: 'id' }
-      );
+      },
+    });
 
-    if (profileError) console.warn('Profile creation error:', profileError);
+    if (error) throw error;
+
+    // Upsert profile record (handles race with database trigger)
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: data.user.id,
+            email,
+            name,
+            role,
+            is_active: true,
+          },
+          { onConflict: 'id' }
+        );
+
+      if (profileError) console.warn('Profile creation error:', profileError);
+    }
+
+    return data;
+  } catch (err: any) {
+    throw handleAuthError(err);
   }
-
-  return data;
 };
 
 /**
@@ -71,13 +87,17 @@ export const signIn = async (email: string, password: string) => {
     return { user: mockUser, session: { user: mockUser } };
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) throw error;
-  return data;
+    if (error) throw error;
+    return data;
+  } catch (err: any) {
+    throw handleAuthError(err);
+  }
 };
 
 /**
@@ -89,8 +109,12 @@ export const signOut = async () => {
     return;
   }
 
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  } catch (err: any) {
+    throw handleAuthError(err);
+  }
 };
 
 /**
@@ -110,22 +134,26 @@ export const signInWithGoogle = async (role: UserRole) => {
     return { user: mockUser };
   }
 
-  await AsyncStorage.setItem('pending_google_role', role);
+  try {
+    await AsyncStorage.setItem('pending_google_role', role);
 
-  // In React Native Web, window.location is defined
-  const redirectTo = typeof window !== 'undefined' && window.location
-    ? window.location.origin
-    : 'speedxsafety://';
+    // In React Native Web, window.location is defined
+    const redirectTo = typeof window !== 'undefined' && window.location
+      ? window.location.origin
+      : 'speedxsafety://';
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo,
-    },
-  });
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+      },
+    });
 
-  if (error) throw error;
-  return data;
+    if (error) throw error;
+    return data;
+  } catch (err: any) {
+    throw handleAuthError(err);
+  }
 };
 
 /**
@@ -147,53 +175,57 @@ export const signInWithEmail = async (email: string, name: string, role: UserRol
     return { user: mockUser, session: { user: mockUser } };
   }
 
-  // Generate a secure password for this user (persisted in Supabase Auth).
-  // Each user gets a unique password derived from their email, not a shared dummy.
-  const securePassword = await getOrCreateUserPassword(email);
+  try {
+    // Generate a secure password for this user (persisted in Supabase Auth).
+    // Each user gets a unique password derived from their email, not a shared dummy.
+    const securePassword = await getOrCreateUserPassword(email);
 
-  // Try to sign in first
-  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    email: email.toLowerCase(),
-    password: securePassword,
-  });
-
-  if (!signInError && signInData.user) {
-    // Successfully signed in — ensure profile exists
-    await upsertProfile(signInData.user.id, email.toLowerCase(), name, role);
-    return signInData;
-  }
-
-  // If sign-in failed because user doesn't exist, sign up
-  if (signInError && (
-    signInError.message.includes('Invalid login credentials') ||
-    signInError.message.includes('User not found')
-  )) {
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    // Try to sign in first
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: email.toLowerCase(),
       password: securePassword,
-      options: {
-        data: { name, role },
-      },
     });
 
-    if (signUpError) throw signUpError;
-
-    if (signUpData.user) {
-      await upsertProfile(signUpData.user.id, email.toLowerCase(), name, role);
+    if (!signInError && signInData.user) {
+      // Successfully signed in — ensure profile exists
+      await upsertProfile(signInData.user.id, email.toLowerCase(), name, role);
+      return signInData;
     }
 
-    // After signup, sign in to get a proper session
-    const { data: newSignIn, error: newSignInError } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase(),
-      password: securePassword,
-    });
+    // If sign-in failed because user doesn't exist, sign up
+    if (signInError && (
+      signInError.message.includes('Invalid login credentials') ||
+      signInError.message.includes('User not found')
+    )) {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: email.toLowerCase(),
+        password: securePassword,
+        options: {
+          data: { name, role },
+        },
+      });
 
-    if (newSignInError) throw newSignInError;
-    return newSignIn;
+      if (signUpError) throw signUpError;
+
+      if (signUpData.user) {
+        await upsertProfile(signUpData.user.id, email.toLowerCase(), name, role);
+      }
+
+      // After signup, sign in to get a proper session
+      const { data: newSignIn, error: newSignInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password: securePassword,
+      });
+
+      if (newSignInError) throw newSignInError;
+      return newSignIn;
+    }
+
+    // Other sign-in error
+    throw signInError;
+  } catch (err: any) {
+    throw handleAuthError(err);
   }
-
-  // Other sign-in error
-  throw signInError;
 };
 
 /**
