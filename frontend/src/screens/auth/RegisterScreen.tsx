@@ -23,6 +23,7 @@ export const RegisterScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const { height } = useWindowDimensions();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -50,8 +51,9 @@ export const RegisterScreen = ({ navigation }: any) => {
   }, [role]);
 
   const handleRegister = async () => {
+    setErrorMsg('');
     if (!role || !email || !password || !name) {
-      alert('Please fill all required fields');
+      setErrorMsg('Please fill all required fields');
       return;
     }
     setLoading(true);
@@ -61,7 +63,7 @@ export const RegisterScreen = ({ navigation }: any) => {
       navigation.replace(role === 'parent' ? 'ParentTabs' : 'TeenTabs');
     } catch (err: any) {
       setLoading(false);
-      alert(err.message || 'Registration failed. Please try again.');
+      setErrorMsg(err.message || 'Registration failed. Please try again.');
     }
   };
 
@@ -182,7 +184,7 @@ export const RegisterScreen = ({ navigation }: any) => {
                     <Text style={styles.hint}>Ask your parent for the invite code from their app</Text>
                   </>
                 )}
-              </GlassCard>
+              {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
               <GradientButton
                 title="Create Account"
@@ -241,6 +243,7 @@ const styles = StyleSheet.create({
   },
   form: { marginBottom: Spacing.xxxl },
   hint: { fontSize: FontSize.xs, color: Colors.textTertiary, marginTop: Spacing.sm, marginLeft: Spacing.xs },
+  errorText: { color: Colors.danger, fontSize: FontSize.sm, fontWeight: FontWeight.medium, marginTop: Spacing.md, textAlign: 'center' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.xl, paddingBottom: Spacing.md },
   footerText: { color: Colors.textTertiary, fontSize: FontSize.md },
   footerLink: { color: Colors.primaryLight, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
