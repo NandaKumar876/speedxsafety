@@ -1,14 +1,17 @@
 // ============================================
 // SpeedxSafety - Navigation (Spatial Edition)
-// Floating glassmorphism tab bar + spatial transitions
+// Session-aware routing with auth state persistence
 // ============================================
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize } from '../../constants/theme';
 import { GlassTabBar } from '../../components/common/SpatialComponents';
+import { LinearGradient } from 'expo-linear-gradient';
+import { getCurrentUser, onAuthStateChange } from '../../services/authService';
 
 // Auth Screens
 import { RoleSelectScreen } from '../../screens/auth/RoleSelectScreen';
@@ -146,9 +149,80 @@ function AdminTabs() {
   );
 }
 
+/**
+ * Map a user role to the correct initial route name.
+ */
+const getInitialRouteForRole = (role: string): string => {
+  switch (role) {
+    case 'parent': return 'ParentTabs';
+    case 'admin': return 'AdminTabs';
+    case 'teen': return 'TeenTabs';
+    default: return 'RoleSelect';
+  }
+};
+
 export function AppNavigator() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [initialRoute, setInitialRoute] = useState<string>('RoleSelect');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Check for existing session on app load
+    const checkSession = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (isMounted && user) {
+          setInitialRoute(getInitialRouteForRole(user.role));
+        }
+      } catch (err) {
+        console.warn('Session check failed:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth state changes (sign in, sign out, token refresh)
+    const { data } = onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
+      if (event === 'SIGNED_OUT') {
+        setInitialRoute('RoleSelect');
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          const user = await getCurrentUser();
+          if (user && isMounted) {
+            setInitialRoute(getInitialRouteForRole(user.role));
+          }
+        } catch (err) {
+          console.warn('Auth state change handler error:', err);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      data?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <LinearGradient colors={Colors.gradientBg as any} style={styles.loading}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </LinearGradient>
+    );
+  }
+
   return (
-    <Stack.Navigator screenOptions={spatialScreenOptions}>
+    <Stack.Navigator
+      initialRouteName={initialRoute}
+      screenOptions={spatialScreenOptions}
+    >
       {/* Auth Flow */}
       <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
       <Stack.Screen name="ParentLogin" component={ParentLoginScreen} />
@@ -172,3 +246,11 @@ export function AppNavigator() {
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
