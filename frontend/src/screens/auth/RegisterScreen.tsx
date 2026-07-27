@@ -184,6 +184,8 @@ export const RegisterScreen = ({ navigation }: any) => {
                     <Text style={styles.hint}>Ask your parent for the invite code from their app</Text>
                   </>
                 )}
+              </GlassCard>
+
               {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
               <GradientButton
