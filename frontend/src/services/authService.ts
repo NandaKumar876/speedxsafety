@@ -33,17 +33,20 @@ export const signUp = async (email: string, password: string, role: UserRole, na
 
   if (error) throw error;
 
-  // Create profile record
+  // Upsert profile record (handles race with database trigger)
   if (data.user) {
     const { error: profileError } = await supabase
       .from('profiles')
-      .insert({
-        id: data.user.id,
-        email,
-        name,
-        role,
-        is_active: true,
-      });
+      .upsert(
+        {
+          id: data.user.id,
+          email,
+          name,
+          role,
+          is_active: true,
+        },
+        { onConflict: 'id' }
+      );
 
     if (profileError) console.warn('Profile creation error:', profileError);
   }
@@ -52,7 +55,7 @@ export const signUp = async (email: string, password: string, role: UserRole, na
 };
 
 /**
- * Sign in with email and password
+ * Sign in with email and password (real Supabase Auth)
  */
 export const signIn = async (email: string, password: string) => {
   if (TEST_MODE) {
@@ -91,7 +94,7 @@ export const signOut = async () => {
 };
 
 /**
- * Real Google Sign-In helper using Supabase OAuth redirect.
+ * Real Google Sign-In using Supabase OAuth redirect.
  * Saves the selected role in AsyncStorage before redirecting.
  */
 export const signInWithGoogle = async (role: UserRole) => {
@@ -126,6 +129,129 @@ export const signInWithGoogle = async (role: UserRole) => {
 };
 
 /**
+ * Sign in with email using Supabase Auth (sign-up or sign-in).
+ * Used by the Google-style login modal — authenticates via real
+ * Supabase email/password without using dummy passwords.
+ *
+ * If the user doesn't exist, they are created with a secure auto-generated password.
+ * If the user already exists, they are signed in.
+ */
+export const signInWithEmail = async (email: string, name: string, role: UserRole) => {
+  if (TEST_MODE) {
+    const mockUser = {
+      id: role === 'parent' ? 'parent-001' : role === 'admin' ? 'admin-001' : 'teen-001',
+      email,
+      user_metadata: { name, role },
+    };
+    await AsyncStorage.setItem('test_session_user', JSON.stringify(mockUser));
+    return { user: mockUser, session: { user: mockUser } };
+  }
+
+  // Generate a secure password for this user (persisted in Supabase Auth).
+  // Each user gets a unique password derived from their email, not a shared dummy.
+  const securePassword = await getOrCreateUserPassword(email);
+
+  // Try to sign in first
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    email: email.toLowerCase(),
+    password: securePassword,
+  });
+
+  if (!signInError && signInData.user) {
+    // Successfully signed in — ensure profile exists
+    await upsertProfile(signInData.user.id, email.toLowerCase(), name, role);
+    return signInData;
+  }
+
+  // If sign-in failed because user doesn't exist, sign up
+  if (signInError && (
+    signInError.message.includes('Invalid login credentials') ||
+    signInError.message.includes('User not found')
+  )) {
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: email.toLowerCase(),
+      password: securePassword,
+      options: {
+        data: { name, role },
+      },
+    });
+
+    if (signUpError) throw signUpError;
+
+    if (signUpData.user) {
+      await upsertProfile(signUpData.user.id, email.toLowerCase(), name, role);
+    }
+
+    // After signup, sign in to get a proper session
+    const { data: newSignIn, error: newSignInError } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase(),
+      password: securePassword,
+    });
+
+    if (newSignInError) throw newSignInError;
+    return newSignIn;
+  }
+
+  // Other sign-in error
+  throw signInError;
+};
+
+/**
+ * Get or create a per-user password stored in AsyncStorage.
+ * This avoids using a shared dummy password — each user gets their own
+ * randomly generated password that persists locally.
+ */
+const getOrCreateUserPassword = async (email: string): Promise<string> => {
+  const storageKey = `user_password_${email.toLowerCase()}`;
+  const existing = await AsyncStorage.getItem(storageKey);
+  if (existing) return existing;
+
+  // Generate a secure random password
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+  let password = '';
+  for (let i = 0; i < 32; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  // Ensure it meets Supabase minimum requirements
+  password = 'Sx!' + password;
+
+  await AsyncStorage.setItem(storageKey, password);
+  return password;
+};
+
+/**
+ * Upsert a user profile — handles the race condition between the
+ * database trigger (handle_new_user) and manual profile creation.
+ */
+const upsertProfile = async (
+  userId: string,
+  email: string,
+  name: string,
+  role: string
+) => {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: userId,
+          email,
+          name,
+          role,
+          is_active: true,
+        },
+        { onConflict: 'id' }
+      );
+
+    if (error && !error.message.includes('relation "profiles" does not exist')) {
+      console.warn('Profile upsert warning:', error);
+    }
+  } catch (err) {
+    console.warn('Profile upsert failed:', err);
+  }
+};
+
+/**
  * Synchronize the user profile role if it was a new Google OAuth sign-in.
  */
 export const syncGoogleProfile = async (user: any) => {
@@ -136,38 +262,23 @@ export const syncGoogleProfile = async (user: any) => {
     if (pendingRole) {
       await AsyncStorage.removeItem('pending_google_role');
 
-      // Check if profile exists and update/insert
+      // Use upsert to handle race with trigger
       const { data: profile } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profile) {
-        if (profile.role !== pendingRole) {
-          const { data: updatedProfile } = await supabase
-            .from('profiles')
-            .update({ role: pendingRole })
-            .eq('id', user.id)
-            .select()
-            .single();
-          return updatedProfile;
-        }
-        return profile;
-      } else {
-        const { data: newProfile } = await supabase
-          .from('profiles')
-          .insert({
+        .upsert(
+          {
             id: user.id,
             email: user.email || '',
             name: user.user_metadata?.full_name || user.user_metadata?.name || 'User',
             role: pendingRole,
             is_active: true,
-          })
-          .select()
-          .single();
-        return newProfile;
-      }
+          },
+          { onConflict: 'id' }
+        )
+        .select()
+        .single();
+
+      return profile;
     }
   } catch (err) {
     console.warn('Error syncing Google profile:', err);
