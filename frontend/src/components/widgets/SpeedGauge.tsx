@@ -6,9 +6,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
-import { Colors, FontSize, FontWeight, Shadow } from '../constants/theme';
-import { scaleWidth, scaleHeight, scaleFont } from '../utils/responsive';
-import { canUseNativeDriver } from '../utils/platform';
+import { Colors, FontSize, FontWeight, Shadow } from '../../constants/theme';
+import { scaleWidth, scaleHeight, scaleFont } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 
 interface SpeedGaugeProps {
   speed: number;

@@ -5,9 +5,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontSize, FontWeight, Shadow, BorderRadius } from '../constants/theme';
-import { scaleWidth, scaleHeight } from '../utils/responsive';
-import { canUseNativeDriver } from '../utils/platform';
+import { Colors, FontSize, FontWeight, Shadow, BorderRadius } from '../../constants/theme';
+import { scaleWidth, scaleHeight } from '../../utils/responsive';
+import { canUseNativeDriver } from '../../utils/platform';
 
 interface AnimatedMapMarkerProps {
   speed: number;
