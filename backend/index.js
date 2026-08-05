@@ -88,7 +88,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // ── Start Server ─────────────────────────────
-if (process.env.NODE_ENV !== 'production') {
+if (require.main === module) {
   const startServer = (port) => {
     const server = app.listen(port);
 

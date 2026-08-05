@@ -51,14 +51,14 @@ This project is built using a clean, modern, and decoupled architecture. For det
 ## Getting Started
 
 ## 1. Database Setup
-Import the SQL schema located at [backend/supabase-schema.sql](file:///c:/Users/nanda/Desktop/speedxsafety/backend/supabase-schema.sql) into your Supabase project's SQL editor and execute it. This creates:
+Import the SQL schema located at [backend/db/schema.sql](file:///c:/Users/nanda/Documents/speedxsafety/backend/db/schema.sql) into your Supabase project's SQL editor and execute it. This creates:
 - `profiles`, `teens`, `trips`, `alerts`, `geofences`, `badges`, and `teen_locations` tables.
 - Triggers to automatically provision user profiles upon signup.
 - Realtime publication configurations.
 - RLS policies.
 
 ### 2. Frontend Environment Setup
-Open [frontend/src/services/supabase.ts](file:///c:/Users/nanda/Desktop/speedxsafety/frontend/src/services/supabase.ts) and add your project URL and public anon key:
+Open [frontend/src/services/supabase.ts](file:///c:/Users/nanda/Documents/speedxsafety/frontend/src/services/supabase.ts) and add your project URL and public anon key:
 
 ```typescript
 const supabaseUrl = 'YOUR_SUPABASE_URL';
